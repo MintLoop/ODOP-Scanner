@@ -45,6 +45,22 @@ def test_malformed_record_is_retained_and_flagged(tmp_path: Path) -> None:
     assert rows[1].parse_error == "product missing"
 
 
+def test_unbalanced_columns_are_quarantined_as_malformed() -> None:
+    page = """
+ 2. ARUNACHAL PRADESH
+ Sl. No.          District                               ODOP
+ 23               Papum Pare (Capital                    Turmeric Complex)
+"""
+    rows = parse_official_layout_pages(
+        [page], source_id="source", ingested_at=datetime(2026, 10, 3, tzinfo=UTC)
+    )
+
+    assert rows[0].parse_status == "malformed"
+    assert rows[0].parse_error == (
+        "district parentheses unbalanced; product parentheses unbalanced"
+    )
+
+
 def test_product_column_updates_for_each_state_section() -> None:
     page = """
  1. FIRST STATE
@@ -62,6 +78,30 @@ def test_product_column_updates_for_each_state_section() -> None:
         ("FIRST STATE", "Alpha", "Apple"),
         ("SECOND STATE", "Beta", "Banana"),
     ]
+
+
+def test_layout_parser_retains_pdf_page_number_and_shifted_product_continuation() -> None:
+    page = """
+ 5. BIHAR
+ Sl. No.          District                               ODOP
+ 7                Bhojpur                                Indian traditional Sweets (Khurma/
+                                                       Belgrami)
+ 8                Buxar                                  Papdi
+ 257
+"""
+    rows = parse_official_layout_pages(
+        [page],
+        source_id="source",
+        ingested_at=datetime(2026, 10, 3, tzinfo=UTC),
+        page_number_offset=256,
+    )
+
+    assert rows[0].source_page == 257
+    assert rows[0].source_reference == "page:257;state:BIHAR;row:7"
+    assert rows[0].district == "Bhojpur"
+    assert rows[0].product == "Indian traditional Sweets (Khurma/ Belgrami)"
+    assert rows[1].district == "Buxar"
+    assert rows[1].product == "Papdi"
 
 
 def test_csv_requires_expected_headers(tmp_path: Path) -> None:

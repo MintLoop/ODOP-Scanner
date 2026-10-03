@@ -70,6 +70,41 @@ marked `checked_not_assumed_current`: it remains v0 source-of-record because MoF
 still links it as the approved revised list and newer official publications conflict without declaring
 supersession. Canonical ingestion fails closed if its SHA-256 or 726-row invariant changes.
 
+### Deterministic source reconciliation
+
+Compare the pinned 2024 source against the two newer official annexures. If local files are omitted,
+the command downloads the three configured official URLs; local snapshots remain hash-validated:
+
+```bash
+.venv/bin/python -m odop_scanner reconcile \
+  --baseline /path/to/revised-2024.pdf \
+  --lok-sabha /path/to/lok-sabha-525.pdf \
+  --annual-report /path/to/annual-report-2024-25.pdf
+```
+
+The comparison configuration, expected hashes, row counts, annexure page range, and parser quarantine
+count live in [`config/reconciliation.v0.toml`](config/reconciliation.v0.toml). Comparison IDs and row
+diff IDs are content-derived, so rerunning identical inputs is idempotent. Only punctuation, casing,
+spacing, separators, and layout hyphenation are normalized; values such as `Kiwi based Products` and
+`Kiwi` remain different and require review.
+
+Inspect pending conflicts and append a review decision:
+
+```bash
+.venv/bin/python -m odop_scanner reconciliation-queue \
+  --human-status pending --limit 25 --offset 0
+
+.venv/bin/python -m odop_scanner reconciliation-review DIFF_ID \
+  --decision keep_2024 \
+  --reviewer "Ben" \
+  --rationale "Retain the approved memorandum pending authoritative clarification."
+```
+
+Review decisions are append-only. Later decisions point to the decision they supersede; they never
+rewrite source rows, diffs, or the configured 2024 source-of-record. Available decisions are
+`keep_2024`, `accept_newer`, `mark_same`, and `defer_ambiguous`. Even `accept_newer` records only a
+review outcome—it does not automatically supersede the canonical source.
+
 Normalize, inspect candidates, score Makhana, and produce a report:
 
 ```bash
@@ -143,4 +178,5 @@ design and phase boundaries are in
 
 Tests cover ingestion, malformed rows, aliases, ambiguous normalization, duplicate districts,
 deterministic scoring, missing evidence, weighted coverage, config versioning, regulatory penalties,
-run receipts, and the Makhana Product #001 slice.
+run receipts, source reconciliation statuses, append-only reviews, source-version isolation, and the
+Makhana Product #001 slice.

@@ -15,6 +15,8 @@ from .models import (
     MetricValue,
     NormalizationDecision,
     ParsedRow,
+    ReconciliationResult,
+    ReviewDecision,
     ScoreResult,
     SourceDocument,
     SourceFreshnessConfig,
@@ -143,6 +145,200 @@ def store_source_freshness(
     return check_id
 
 
+def store_reconciliation(
+    connection: duckdb.DuckDBPyConnection,
+    result: ReconciliationResult,
+) -> int:
+    now = datetime.now(UTC)
+    connection.execute(
+        """
+        INSERT INTO source_reconciliation_comparisons VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (comparison_id) DO NOTHING
+        """,
+        [
+            result.comparison_id,
+            result.comparison_version,
+            result.config_sha256,
+            result.baseline_source_version,
+            result.newer_source_version,
+            result.baseline_source_sha256,
+            result.newer_source_sha256,
+            now,
+        ],
+    )
+    for diff in result.diffs:
+        connection.execute(
+            """
+            INSERT INTO source_reconciliation_diffs VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ) ON CONFLICT (diff_id) DO NOTHING
+            """,
+            [
+                diff.diff_id,
+                diff.comparison_id,
+                diff.state,
+                diff.district,
+                diff.baseline_product,
+                diff.newer_product,
+                json.dumps(diff.baseline_row_ids),
+                json.dumps(diff.newer_row_ids),
+                json.dumps(diff.baseline_locators),
+                json.dumps(diff.newer_locators),
+                diff.conflict_type,
+                diff.proposed_status,
+                diff.human_review_status,
+                now,
+            ],
+        )
+    return len(result.diffs)
+
+
+def reconciliation_queue(
+    connection: duckdb.DuckDBPyConnection,
+    *,
+    human_status: str = "pending",
+    newer_source_version: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    valid_statuses = {"all", "not_required", "pending", "reviewed", "ambiguous"}
+    if human_status not in valid_statuses:
+        raise ValueError(f"invalid human review status: {human_status}")
+    if limit < 1:
+        raise ValueError("queue limit must be at least 1")
+    if offset < 0:
+        raise ValueError("queue offset cannot be negative")
+    records = connection.execute(
+        """
+        WITH latest_reviews AS (
+            SELECT *, row_number() OVER (
+                PARTITION BY diff_id ORDER BY reviewed_at DESC, decision_id DESC
+            ) AS review_rank
+            FROM source_reconciliation_reviews
+        ), materialized AS (
+            SELECT
+                d.diff_id, d.comparison_id, c.comparison_version,
+                c.baseline_source_version, c.newer_source_version,
+                c.baseline_source_sha256, c.newer_source_sha256,
+                d.state, d.district, d.baseline_product, d.newer_product,
+                d.baseline_row_ids_json, d.newer_row_ids_json,
+                d.baseline_locators_json, d.newer_locators_json,
+                d.conflict_type, d.proposed_status,
+                coalesce(r.resulting_human_review_status, d.initial_human_review_status)
+                    AS human_review_status,
+                r.decision, r.reviewer, r.rationale, r.reviewed_at, r.decision_id
+            FROM source_reconciliation_diffs d
+            JOIN source_reconciliation_comparisons c
+                ON c.comparison_id = d.comparison_id
+            LEFT JOIN latest_reviews r ON r.diff_id = d.diff_id AND r.review_rank = 1
+        )
+        SELECT * FROM materialized
+        WHERE (? IS NULL OR newer_source_version = ?)
+          AND (? = 'all' OR human_review_status = ?)
+        ORDER BY newer_source_version, state, district, diff_id
+        LIMIT ? OFFSET ?
+        """,
+        [
+            newer_source_version,
+            newer_source_version,
+            human_status,
+            human_status,
+            limit,
+            offset,
+        ],
+    ).fetchall()
+    fields = (
+        "diff_id",
+        "comparison_id",
+        "comparison_version",
+        "baseline_source_version",
+        "newer_source_version",
+        "baseline_source_sha256",
+        "newer_source_sha256",
+        "state",
+        "district",
+        "baseline_product",
+        "newer_product",
+        "baseline_row_ids",
+        "newer_row_ids",
+        "baseline_locators",
+        "newer_locators",
+        "conflict_type",
+        "proposed_status",
+        "human_review_status",
+        "current_decision",
+        "reviewer",
+        "rationale",
+        "reviewed_at",
+        "decision_id",
+    )
+    output: list[dict[str, Any]] = []
+    for record in records:
+        item = dict(zip(fields, record, strict=True))
+        for field in (
+            "baseline_row_ids",
+            "newer_row_ids",
+            "baseline_locators",
+            "newer_locators",
+        ):
+            item[field] = json.loads(item[field])
+        item["evidence_locator"] = {
+            "baseline": item["baseline_locators"],
+            "newer": item["newer_locators"],
+        }
+        output.append(item)
+    return output
+
+
+def append_reconciliation_review(
+    connection: duckdb.DuckDBPyConnection,
+    *,
+    diff_id: str,
+    decision: ReviewDecision,
+    reviewer: str,
+    rationale: str,
+    reviewed_at: datetime | None = None,
+) -> str:
+    if decision not in {"keep_2024", "accept_newer", "mark_same", "defer_ambiguous"}:
+        raise ValueError(f"invalid reconciliation decision: {decision}")
+    if not reviewer.strip() or not rationale.strip():
+        raise ValueError("reviewer and rationale are required")
+    if (
+        connection.execute(
+            "SELECT 1 FROM source_reconciliation_diffs WHERE diff_id = ?", [diff_id]
+        ).fetchone()
+        is None
+    ):
+        raise LookupError(f"unknown reconciliation diff: {diff_id}")
+    previous = connection.execute(
+        """
+        SELECT decision_id FROM source_reconciliation_reviews
+        WHERE diff_id = ?
+        ORDER BY reviewed_at DESC, decision_id DESC
+        LIMIT 1
+        """,
+        [diff_id],
+    ).fetchone()
+    resulting_status = "ambiguous" if decision == "defer_ambiguous" else "reviewed"
+    decision_id = str(uuid.uuid4())
+    connection.execute(
+        """
+        INSERT INTO source_reconciliation_reviews VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            decision_id,
+            diff_id,
+            decision,
+            resulting_status,
+            reviewer.strip(),
+            rationale.strip(),
+            reviewed_at or datetime.now(UTC),
+            str(previous[0]) if previous is not None else None,
+        ],
+    )
+    return decision_id
+
+
 class ProcessingRun:
     def __init__(
         self,
@@ -252,15 +448,27 @@ def store_ingestion(
     return len(materialized)
 
 
-def load_parsed_rows(connection: duckdb.DuckDBPyConnection) -> tuple[ParsedRow, ...]:
+def load_parsed_rows(
+    connection: duckdb.DuckDBPyConnection,
+    *,
+    source_ids: tuple[str, ...] | None = None,
+) -> tuple[ParsedRow, ...]:
+    source_filter = ""
+    parameters: list[str] = []
+    if source_ids:
+        placeholders = ", ".join("?" for _ in source_ids)
+        source_filter = f"AND source_id IN ({placeholders})"
+        parameters.extend(source_ids)
     records = connection.execute(
-        """
+        f"""
         SELECT row_id, source_id, state, district, product, source_page, source_reference,
                raw_text, parse_status, parse_error, ingested_at
         FROM source_rows
         WHERE parse_status = 'parsed'
+        {source_filter}
         ORDER BY source_id, source_page, source_reference
-        """
+        """,
+        parameters,
     ).fetchall()
     return tuple(ParsedRow(*record) for record in records)
 

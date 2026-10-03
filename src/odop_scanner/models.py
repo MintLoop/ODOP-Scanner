@@ -11,6 +11,9 @@ ParseStatus = Literal["parsed", "malformed"]
 ConfidenceBand = Literal["none", "low", "medium", "high"]
 ScoreStatus = Literal["unscored", "partial", "scored"]
 CountChange = Literal["baseline", "unchanged", "changed", "unknown"]
+ReconciliationStatus = Literal["same", "changed", "added", "removed", "ambiguous"]
+HumanReviewStatus = Literal["not_required", "pending", "reviewed", "ambiguous"]
+ReviewDecision = Literal["keep_2024", "accept_newer", "mark_same", "defer_ambiguous"]
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,28 @@ class SourceFreshnessConfig:
 
 
 @dataclass(frozen=True)
+class ReconciliationSourceSpec:
+    source_version: str
+    role: Literal["baseline", "lok_sabha", "annual_report"]
+    name: str
+    url: str
+    source_date: date
+    expected_sha256: str
+    expected_rows: int
+    expected_malformed_rows: int
+    page_start: int | None = None
+    page_end: int | None = None
+
+
+@dataclass(frozen=True)
+class ReconciliationConfig:
+    version: str
+    sha256: str
+    baseline_source_version: str
+    sources: tuple[ReconciliationSourceSpec, ...]
+
+
+@dataclass(frozen=True)
 class SourceDocument:
     source_id: str
     source_name: str
@@ -82,6 +107,47 @@ class ParsedRow:
     parse_status: ParseStatus
     parse_error: str | None
     ingested_at: datetime
+
+
+@dataclass(frozen=True)
+class ReconciliationDataset:
+    source_version: str
+    document: SourceDocument
+    rows: tuple[ParsedRow, ...]
+
+
+@dataclass(frozen=True)
+class ReconciliationDiff:
+    diff_id: str
+    comparison_id: str
+    comparison_version: str
+    baseline_source_version: str
+    newer_source_version: str
+    baseline_source_sha256: str
+    newer_source_sha256: str
+    state: str
+    district: str
+    baseline_product: str | None
+    newer_product: str | None
+    baseline_row_ids: tuple[str, ...]
+    newer_row_ids: tuple[str, ...]
+    baseline_locators: tuple[str, ...]
+    newer_locators: tuple[str, ...]
+    conflict_type: str
+    proposed_status: ReconciliationStatus
+    human_review_status: HumanReviewStatus
+
+
+@dataclass(frozen=True)
+class ReconciliationResult:
+    comparison_id: str
+    comparison_version: str
+    config_sha256: str
+    baseline_source_version: str
+    newer_source_version: str
+    baseline_source_sha256: str
+    newer_source_sha256: str
+    diffs: tuple[ReconciliationDiff, ...]
 
 
 @dataclass(frozen=True)

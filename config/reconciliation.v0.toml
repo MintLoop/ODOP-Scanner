@@ -1,0 +1,38 @@
+version = "v0.1.0"
+baseline_source_version = "mofpi-odop-revised-2024-03-13"
+
+[[sources]]
+source_version = "mofpi-odop-revised-2024-03-13"
+role = "baseline"
+name = "MoFPI revised ODOP list for 35 States/UTs"
+url = "https://www.mofpi.gov.in/sites/default/files/revised_list_of_odop_for_35_states_13.03.2024_1.pdf"
+source_date = "2024-03-13"
+expected_sha256 = "bd37a47206a44ff0c2357da566a3e2f8aed69c065c81eb3418c117186f803613"
+expected_rows = 726
+expected_malformed_rows = 0
+page_start = 1
+page_end = 39
+
+[[sources]]
+source_version = "lok-sabha-question-525-2025-02-06"
+role = "lok_sabha"
+name = "Lok Sabha Question 525 ODOP annexure"
+url = "https://www.mofpi.gov.in/sites/default/files/525.pdf"
+source_date = "2025-02-06"
+expected_sha256 = "a03031e6cabfe04900192a9636384fc0800d866e6db9c2bbda7c5be89c49d125"
+expected_rows = 726
+expected_malformed_rows = 0
+page_start = 1
+page_end = 19
+
+[[sources]]
+source_version = "mofpi-annual-report-2024-25"
+role = "annual_report"
+name = "MoFPI Annual Report 2024-25 ODOP annexure"
+url = "https://www.mofpi.gov.in/sites/default/files/mofpi_annual_report_2024-25_english_21.08.2025.pdf"
+source_date = "2025-08-21"
+expected_sha256 = "9d72b0aaaed996a381426b4679e6f32900ed936ddc462f4d9d850773f2df3805"
+expected_rows = 726
+expected_malformed_rows = 3
+page_start = 255
+page_end = 274

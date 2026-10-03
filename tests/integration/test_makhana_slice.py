@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import duckdb
 import pytest
 
 from odop_scanner.cli import main
-from odop_scanner.config import load_scoring, load_taxonomy
+from odop_scanner.config import load_scoring, load_sources, load_taxonomy
+from odop_scanner.ingestion import with_source_id
 from odop_scanner.normalization import normalize_rows
 from odop_scanner.scoring import calculate_score
 from odop_scanner.storage import (
@@ -15,9 +17,10 @@ from odop_scanner.storage import (
     get_features,
     load_parsed_rows,
     product_record,
+    store_ingestion,
     store_normalization,
 )
-from tests.conftest import stored_bihar_fixture
+from tests.conftest import ingest_bihar_fixture, stored_bihar_fixture
 
 
 def test_makhana_product_001_end_to_end(
@@ -157,3 +160,52 @@ def test_canonical_source_hash_change_fails_closed(
     assert exit_code == 1
     assert output["status"] == "failed"
     assert "canonical source hash changed" in output["error"]
+
+
+def test_normalization_uses_only_canonical_rows_after_reconciliation(
+    bihar_fixture: Path,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    database_path = tmp_path / "source-isolation.duckdb"
+    connection = duckdb.connect(str(database_path))
+    connection.close()
+    from odop_scanner.storage import connect_database
+
+    connection = connect_database(database_path)
+    fixture = ingest_bihar_fixture(bihar_fixture, tmp_path / "raw")
+    _, sources = load_sources()
+    canonical_source_id = sources[0].expected_sha256
+    assert canonical_source_id is not None
+    canonical_document = replace(
+        fixture.document,
+        source_id=canonical_source_id,
+        content_sha256=canonical_source_id,
+    )
+    canonical_rows = with_source_id(fixture.rows, canonical_source_id)
+    store_ingestion(connection, canonical_document, canonical_rows)
+
+    newer_source_id = "newer-source-hash"
+    newer_document = replace(
+        fixture.document,
+        source_id=newer_source_id,
+        source_name="newer reconciliation source",
+        content_sha256=newer_source_id,
+    )
+    store_ingestion(connection, newer_document, with_source_id(fixture.rows, newer_source_id))
+    connection.close()
+
+    assert main(["--db", str(database_path), "normalize"]) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["normalized_count"] == 6
+
+    connection = duckdb.connect(str(database_path), read_only=True)
+    source_counts = connection.execute(
+        """
+        SELECT r.source_id, count(*)
+        FROM normalized_products n JOIN source_rows r ON r.row_id = n.row_id
+        GROUP BY r.source_id
+        """
+    ).fetchall()
+    connection.close()
+    assert source_counts == [(canonical_source_id, 6)]

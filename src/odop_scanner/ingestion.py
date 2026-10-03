@@ -63,6 +63,10 @@ def _finish_pending(pending: _PendingRow, source_id: str, ingested_at: datetime)
         problems.append("district missing")
     if not product:
         problems.append("product missing")
+    if district.count("(") != district.count(")"):
+        problems.append("district parentheses unbalanced")
+    if product.count("(") != product.count(")"):
+        problems.append("product parentheses unbalanced")
     status: ParseStatus = "malformed" if problems else "parsed"
     reference = f"page:{pending.page};state:{pending.state};row:{pending.sequence}"
     return ParsedRow(
@@ -121,12 +125,13 @@ def parse_official_layout_pages(
     *,
     source_id: str,
     ingested_at: datetime,
+    page_number_offset: int = 0,
 ) -> tuple[ParsedRow, ...]:
     rows: list[ParsedRow] = []
     state = ""
     product_column: int | None = None
 
-    for page_number, page_text in enumerate(pages, start=1):
+    for page_number, page_text in enumerate(pages, start=page_number_offset + 1):
         lines = page_text.splitlines()
         heading_indexes = [
             index for index, line in enumerate(lines) if _STATE_HEADING.match(line) is not None
@@ -170,6 +175,9 @@ def parse_official_layout_pages(
                 continue
             if "odop list of" in lowered:
                 continue
+            if stripped.isdigit():
+                # Page folios can fall inside a pending table row in layout extraction.
+                continue
 
             numbered = _NUMBERED_ROW.match(line)
             if numbered is not None and numbered.group("body") is not None:
@@ -197,6 +205,10 @@ def parse_official_layout_pages(
             if pending is not None and product_column is not None:
                 district_text = line[:product_column].strip()
                 product_text = line[product_column:].strip()
+                if pending.product_parts and re.search(r" {2,}", stripped) is None:
+                    # Wrapped products sometimes shift left of the inferred table boundary.
+                    district_text = ""
+                    product_text = stripped
                 if district_text:
                     pending.district_parts.append(district_text)
                 if product_text:
@@ -308,6 +320,8 @@ def ingest_path(
     source_date: date | None,
     raw_directory: Path,
     ingested_at: datetime | None = None,
+    pdf_page_start: int | None = None,
+    pdf_page_end: int | None = None,
 ) -> IngestionResult:
     timestamp = ingested_at or datetime.now(UTC)
     payload = path.read_bytes()
@@ -337,7 +351,18 @@ def ingest_path(
     elif suffix == ".json":
         rows = _parse_json_rows(raw_text, source_id=digest, ingested_at=timestamp)
     else:
-        rows = parse_official_layout_pages(pages, source_id=digest, ingested_at=timestamp)
+        page_start = pdf_page_start or 1
+        page_end = pdf_page_end or len(pages)
+        if page_start < 1 or page_end < page_start or page_end > len(pages):
+            raise ValueError(
+                f"invalid PDF page range {page_start}-{page_end} for {len(pages)} pages"
+            )
+        rows = parse_official_layout_pages(
+            pages[page_start - 1 : page_end],
+            source_id=digest,
+            ingested_at=timestamp,
+            page_number_offset=page_start - 1,
+        )
     return IngestionResult(document=document, rows=rows)
 
 

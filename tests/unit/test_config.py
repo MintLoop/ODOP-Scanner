@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from odop_scanner.config import load_source_freshness, load_sources
+from odop_scanner.config import load_reconciliation, load_source_freshness, load_sources
 
 
 def test_source_freshness_records_reviewed_supersession_decision() -> None:
@@ -25,3 +25,19 @@ def test_source_freshness_records_reviewed_supersession_decision() -> None:
     assert annual_report.product_family_count == 137
     assert annual_report.product_family_count_change == "unchanged"
     assert annual_report.supersedes_2024 is False
+
+
+def test_reconciliation_config_pins_all_three_official_snapshots() -> None:
+    config = load_reconciliation()
+
+    assert config.version == "v0.1.0"
+    assert len(config.sources) == 3
+    assert {source.role for source in config.sources} == {
+        "baseline",
+        "lok_sabha",
+        "annual_report",
+    }
+    assert all(len(source.expected_sha256) == 64 for source in config.sources)
+    annual = next(source for source in config.sources if source.role == "annual_report")
+    assert (annual.page_start, annual.page_end) == (255, 274)
+    assert annual.expected_malformed_rows == 3

@@ -9,9 +9,10 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .config import (
+    load_reconciliation,
     load_scoring,
     load_source_freshness,
     load_sources,
@@ -19,10 +20,13 @@ from .config import (
     project_root,
 )
 from .ingestion import download_source, ingest_path
+from .models import ReconciliationDataset, ReconciliationResult, ReviewDecision
 from .normalization import normalize_rows
+from .reconciliation import makhana_checks, reconcile_datasets
 from .scoring import calculate_score
 from .storage import (
     ProcessingRun,
+    append_reconciliation_review,
     candidate_records,
     connect_database,
     dataset_config_version,
@@ -30,12 +34,14 @@ from .storage import (
     get_features,
     load_parsed_rows,
     product_record,
+    reconciliation_queue,
     report_records,
     resolve_family_id,
     score_as_dict,
     source_set_identifier,
     store_ingestion,
     store_normalization,
+    store_reconciliation,
     store_score,
     store_source_freshness,
 )
@@ -66,6 +72,38 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "freshness", help="show and persist the reviewed official-source freshness manifest"
     )
+
+    reconcile = subparsers.add_parser(
+        "reconcile", help="compare the 2024 source against reviewed newer official annexures"
+    )
+    reconcile.add_argument("--config", type=Path)
+    reconcile.add_argument("--baseline", type=Path, help="local 2024 PDF snapshot")
+    reconcile.add_argument("--lok-sabha", type=Path, help="local Lok Sabha Q525 PDF snapshot")
+    reconcile.add_argument("--annual-report", type=Path, help="local annual-report PDF snapshot")
+
+    queue = subparsers.add_parser(
+        "reconciliation-queue", help="show deterministic source conflicts and review state"
+    )
+    queue.add_argument(
+        "--human-status",
+        choices=("all", "not_required", "pending", "reviewed", "ambiguous"),
+        default="pending",
+    )
+    queue.add_argument("--source-version")
+    queue.add_argument("--limit", type=int, default=100)
+    queue.add_argument("--offset", type=int, default=0)
+
+    review = subparsers.add_parser(
+        "reconciliation-review", help="append a human source-reconciliation decision"
+    )
+    review.add_argument("diff_id")
+    review.add_argument(
+        "--decision",
+        required=True,
+        choices=("keep_2024", "accept_newer", "mark_same", "defer_ambiguous"),
+    )
+    review.add_argument("--reviewer", required=True)
+    review.add_argument("--rationale", required=True)
 
     normalize = subparsers.add_parser(
         "normalize", help="normalize parsed rows into product families"
@@ -221,17 +259,236 @@ def _freshness(args: argparse.Namespace) -> dict[str, Any]:
         connection.close()
 
 
+def _reconcile(args: argparse.Namespace) -> dict[str, Any]:
+    config = load_reconciliation(args.config)
+    local_paths = {
+        "baseline": args.baseline,
+        "lok_sabha": args.lok_sabha,
+        "annual_report": args.annual_report,
+    }
+    connection = connect_database(args.db)
+    run = ProcessingRun(
+        connection,
+        "reconcile",
+        config_version=config.version,
+        config_sha256=config.sha256,
+        source_identifier=json.dumps(
+            [source.source_version for source in config.sources], separators=(",", ":")
+        ),
+        input_hash=hashlib.sha256(
+            "".join(source.expected_sha256 for source in config.sources).encode()
+        ).hexdigest(),
+    )
+    try:
+        datasets: dict[str, ReconciliationDataset] = {}
+        source_summaries: list[dict[str, Any]] = []
+        with tempfile.TemporaryDirectory(prefix="odop-reconcile-") as temporary:
+            temporary_path = Path(temporary)
+            for source in config.sources:
+                supplied_path = local_paths[source.role]
+                path = supplied_path or temporary_path / f"{source.source_version}.pdf"
+                if supplied_path is None:
+                    download_source(source.url, path)
+                ingestion_result = ingest_path(
+                    path,
+                    source_name=source.name,
+                    source_url=source.url,
+                    source_date=source.source_date,
+                    raw_directory=args.raw_dir,
+                    pdf_page_start=source.page_start,
+                    pdf_page_end=source.page_end,
+                )
+                if ingestion_result.document.content_sha256 != source.expected_sha256:
+                    raise ValueError(
+                        f"{source.source_version} hash changed: expected "
+                        f"{source.expected_sha256}, got "
+                        f"{ingestion_result.document.content_sha256}"
+                    )
+                if len(ingestion_result.rows) != source.expected_rows:
+                    raise ValueError(
+                        f"{source.source_version} row count changed: expected "
+                        f"{source.expected_rows}, got {len(ingestion_result.rows)}"
+                    )
+                malformed_count = sum(
+                    row.parse_status == "malformed" for row in ingestion_result.rows
+                )
+                if malformed_count != source.expected_malformed_rows:
+                    raise ValueError(
+                        f"{source.source_version} malformed row count changed: expected "
+                        f"{source.expected_malformed_rows}, got {malformed_count}"
+                    )
+                store_ingestion(connection, ingestion_result.document, ingestion_result.rows)
+                datasets[source.source_version] = ReconciliationDataset(
+                    source_version=source.source_version,
+                    document=ingestion_result.document,
+                    rows=ingestion_result.rows,
+                )
+                source_summaries.append(
+                    {
+                        "source_version": source.source_version,
+                        "role": source.role,
+                        "source_sha256": ingestion_result.document.content_sha256,
+                        "row_count": len(ingestion_result.rows),
+                        "malformed_count": malformed_count,
+                        "page_start": source.page_start,
+                        "page_end": source.page_end,
+                    }
+                )
+
+        baseline = datasets[config.baseline_source_version]
+        results: list[ReconciliationResult] = []
+        comparison_summaries: list[dict[str, Any]] = []
+        for source in config.sources:
+            if source.role == "baseline":
+                continue
+            comparison_result = reconcile_datasets(
+                baseline,
+                datasets[source.source_version],
+                comparison_version=config.version,
+                config_sha256=config.sha256,
+            )
+            store_reconciliation(connection, comparison_result)
+            results.append(comparison_result)
+            status_counts = {
+                status: sum(diff.proposed_status == status for diff in comparison_result.diffs)
+                for status in ("same", "changed", "added", "removed", "ambiguous")
+            }
+            comparison_summaries.append(
+                {
+                    "comparison_id": comparison_result.comparison_id,
+                    "newer_source_version": comparison_result.newer_source_version,
+                    "diff_count": len(comparison_result.diffs),
+                    "conflict_count": len(comparison_result.diffs) - status_counts["same"],
+                    "status_counts": status_counts,
+                }
+            )
+        checks = makhana_checks(results)
+        total_conflicts = sum(item["conflict_count"] for item in comparison_summaries)
+        output = {
+            "run_id": run.run_id,
+            "comparison_version": config.version,
+            "config_sha256": config.sha256,
+            "baseline_source_version": config.baseline_source_version,
+            "sources": source_summaries,
+            "comparisons": comparison_summaries,
+            "total_conflicts": total_conflicts,
+            "makhana_checks": checks,
+            "makhana_changed": any(check["proposed_status"] != "same" for check in checks),
+            "supersession_applied": False,
+        }
+        run.succeed("tables:source_reconciliation_comparisons,source_reconciliation_diffs")
+        return output
+    except BaseException as error:
+        run.fail(error)
+        raise
+    finally:
+        connection.close()
+
+
+def _reconciliation_queue(args: argparse.Namespace) -> dict[str, Any]:
+    config = load_reconciliation()
+    connection = connect_database(args.db)
+    run = ProcessingRun(
+        connection,
+        "reconciliation-queue",
+        config_version=config.version,
+        config_sha256=config.sha256,
+        source_identifier=args.source_version or "all",
+    )
+    try:
+        records = reconciliation_queue(
+            connection,
+            human_status=args.human_status,
+            newer_source_version=args.source_version,
+            limit=args.limit,
+            offset=args.offset,
+        )
+        run.succeed("stdout:reconciliation_queue")
+        return {
+            "run_id": run.run_id,
+            "human_status": args.human_status,
+            "source_version": args.source_version,
+            "limit": args.limit,
+            "offset": args.offset,
+            "result_count": len(records),
+            "results": records,
+        }
+    except BaseException as error:
+        run.fail(error)
+        raise
+    finally:
+        connection.close()
+
+
+def _reconciliation_review(args: argparse.Namespace) -> dict[str, Any]:
+    config = load_reconciliation()
+    connection = connect_database(args.db)
+    run = ProcessingRun(
+        connection,
+        "reconciliation-review",
+        config_version=config.version,
+        config_sha256=config.sha256,
+        source_identifier=args.diff_id,
+    )
+    try:
+        decision = cast(ReviewDecision, args.decision)
+        decision_id = append_reconciliation_review(
+            connection,
+            diff_id=args.diff_id,
+            decision=decision,
+            reviewer=args.reviewer,
+            rationale=args.rationale,
+        )
+        run.succeed(f"review:{decision_id}")
+        return {
+            "run_id": run.run_id,
+            "decision_id": decision_id,
+            "diff_id": args.diff_id,
+            "decision": decision,
+            "append_only": True,
+            "supersession_applied": False,
+        }
+    except BaseException as error:
+        run.fail(error)
+        raise
+    finally:
+        connection.close()
+
+
 def _normalize(args: argparse.Namespace) -> dict[str, Any]:
     taxonomy = load_taxonomy(args.taxonomy)
     connection = connect_database(args.db)
-    rows = load_parsed_rows(connection)
+    _, configured_sources = load_sources()
+    canonical_source_id = configured_sources[0].expected_sha256
+    canonical_present = (
+        canonical_source_id is not None
+        and connection.execute(
+            "SELECT 1 FROM source_documents WHERE source_id = ?", [canonical_source_id]
+        ).fetchone()
+        is not None
+    )
+    if canonical_present and canonical_source_id is not None:
+        rows = load_parsed_rows(connection, source_ids=(canonical_source_id,))
+        normalization_source_identifier = f"source_id:{canonical_source_id}"
+    else:
+        document_count_record = connection.execute(
+            "SELECT count(*) FROM source_documents"
+        ).fetchone()
+        assert document_count_record is not None
+        document_count = int(document_count_record[0])
+        if document_count > 1:
+            raise ValueError(
+                "canonical source is absent; refusing to normalize multiple source versions"
+            )
+        rows = load_parsed_rows(connection)
+        normalization_source_identifier = source_set_identifier(connection)
     input_hash = hashlib.sha256("".join(row.row_id for row in rows).encode()).hexdigest()
     run = ProcessingRun(
         connection,
         "normalize",
         config_version=taxonomy.version,
         config_sha256=taxonomy.sha256,
-        source_identifier=source_set_identifier(connection),
+        source_identifier=normalization_source_identifier,
         input_hash=input_hash,
     )
     try:
@@ -338,6 +595,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     handlers = {
         "ingest": _ingest,
         "freshness": _freshness,
+        "reconcile": _reconcile,
+        "reconciliation-queue": _reconciliation_queue,
+        "reconciliation-review": _reconciliation_review,
         "normalize": _normalize,
         "candidates": _candidates,
         "score": _score,

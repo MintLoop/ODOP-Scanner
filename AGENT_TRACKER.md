@@ -1,5 +1,42 @@
 # Agent tracker
 
+## 2026-10-03 — deterministic official-source reconciliation
+
+Status: complete; all conflicts quarantined for review, with no automatic supersession.
+
+- Added a versioned reconciliation manifest that pins the 2024 revised list, Lok Sabha Question 525,
+  and the 2024–25 Annual Report by URL, date, SHA-256, expected row count, and annexure page range.
+- Added deterministic district identity and product-text comparison. It normalizes presentation only;
+  it does not merge semantic product families or treat wording changes as equivalent.
+- Added content-derived comparison/diff IDs, source hashes, row IDs, PDF page/row locators, raw product
+  values, proposed status, and human-review status to the reconciliation ledger.
+- Added a pending review queue and append-only decisions (`keep_2024`, `accept_newer`, `mark_same`,
+  `defer_ambiguous`). Decisions retain a supersession chain and never mutate the canonical source.
+- Quarantined three annual-report layout rows as ambiguous: Aurangabad, Banka, and Papum Pare (Capital
+  Complex). No inferred repair was applied.
+- Reconciliation-source rows are isolated from normalization; after all three snapshots are stored,
+  the candidate pipeline still consumes only the 726-row canonical 2024 source.
+
+### Reproducible comparison result
+
+| Newer source | Same | Changed | Added | Removed | Ambiguous | Conflicts |
+|---|---:|---:|---:|---:|---:|---:|
+| Lok Sabha Question 525 | 452 | 273 | 1 | 1 | 0 | 275 |
+| Annual Report 2024–25 | 702 | 21 | 0 | 3 | 3 | 27 |
+| **Total** | **1,154** | **294** | **1** | **4** | **3** | **302** |
+
+The Lok Sabha added/removed pair is the literal `Tumkuru` / `Tumakuru` district-label difference. It
+remains pending rather than being auto-aliased. Annual-report malformed rows generate explicit
+ambiguous records while their unmatched 2024 districts remain visible as removed, so no evidence is
+silently paired or discarded.
+
+All six Bihar Makhana assignments—Araria, Darbhanga, Katihar, Madhubani, Saharsa, and Supaul—are
+`same` in both newer sources: 12/12 comparisons unchanged, with source hashes and PDF locators stored.
+
+Validation passes Ruff formatting/linting, strict mypy, and 25 pytest cases. Repeating the real
+three-source run produced the same two comparison IDs and 1,456 stored row-level diffs without
+duplicates.
+
 ## 2026-10-03 — official-source freshness review
 
 Status: complete; 2024 revised PDF retained as an explicitly freshness-checked v0 source-of-record.

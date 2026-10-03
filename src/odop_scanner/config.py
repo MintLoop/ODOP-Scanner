@@ -10,6 +10,8 @@ from .models import (
     CountChange,
     DimensionConfig,
     FreshnessObservation,
+    ReconciliationConfig,
+    ReconciliationSourceSpec,
     ScoringConfig,
     SourceFreshnessConfig,
     SourceSpec,
@@ -115,6 +117,50 @@ def load_source_freshness(path: Path | None = None) -> SourceFreshnessConfig:
         reason=str(selection["reason"]),
         searched_surfaces=tuple(str(value) for value in selection.get("searched_surfaces", [])),
         observations=tuple(observations),
+    )
+
+
+def load_reconciliation(path: Path | None = None) -> ReconciliationConfig:
+    document, digest = _read_toml(path or config_path("reconciliation.v0.toml"))
+    version = str(document.get("version", "")).strip()
+    baseline_source_version = str(document.get("baseline_source_version", "")).strip()
+    if not version or not baseline_source_version:
+        raise ValueError("reconciliation configuration requires version and baseline source")
+
+    valid_roles = {"baseline", "lok_sabha", "annual_report"}
+    sources: list[ReconciliationSourceSpec] = []
+    for item in document.get("sources", []):
+        role = str(item["role"])
+        if role not in valid_roles:
+            raise ValueError(f"invalid reconciliation source role: {role}")
+        sources.append(
+            ReconciliationSourceSpec(
+                source_version=str(item["source_version"]),
+                role=cast(Literal["baseline", "lok_sabha", "annual_report"], role),
+                name=str(item["name"]),
+                url=str(item["url"]),
+                source_date=date.fromisoformat(str(item["source_date"])),
+                expected_sha256=str(item["expected_sha256"]),
+                expected_rows=int(item["expected_rows"]),
+                expected_malformed_rows=int(item.get("expected_malformed_rows", 0)),
+                page_start=int(item["page_start"]) if "page_start" in item else None,
+                page_end=int(item["page_end"]) if "page_end" in item else None,
+            )
+        )
+    if len(sources) != 3 or {source.role for source in sources} != valid_roles:
+        raise ValueError("reconciliation requires baseline, lok_sabha, and annual_report sources")
+    if baseline_source_version not in {source.source_version for source in sources}:
+        raise ValueError("reconciliation baseline must reference a configured source")
+    if (
+        next(source.role for source in sources if source.source_version == baseline_source_version)
+        != "baseline"
+    ):
+        raise ValueError("reconciliation baseline source must have the baseline role")
+    return ReconciliationConfig(
+        version=version,
+        sha256=digest,
+        baseline_source_version=baseline_source_version,
+        sources=tuple(sources),
     )
 
 
