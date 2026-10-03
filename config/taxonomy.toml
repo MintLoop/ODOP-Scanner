@@ -1,0 +1,16 @@
+version = "v0.1.0"
+
+[[families]]
+product_id = "product-001"
+canonical_name = "makhana"
+category = "snacks_and_seeds"
+forced_candidate = true
+aliases = [
+  "makhana",
+  "fox nut",
+  "fox nuts",
+  "foxnut",
+  "foxnuts",
+  "makhana (fox nut)",
+  "makhana (foxnut)",
+]

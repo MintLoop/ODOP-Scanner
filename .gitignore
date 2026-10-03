@@ -1,0 +1,14 @@
+.DS_Store
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+data/cache/
+data/raw/
+artifacts/runs/

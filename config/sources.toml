@@ -1,0 +1,11 @@
+version = "2026-10-03.1"
+
+[[sources]]
+id = "mofpi-odop-revised-2024-03-13"
+name = "MoFPI Revised List of ODOP for 35 States and UTs"
+url = "https://www.mofpi.gov.in/sites/default/files/revised_list_of_odop_for_35_states_13.03.2024_1.pdf"
+source_date = "2024-03-13"
+format = "pdf"
+expected_rows = 726
+expected_sections = 35
+expected_sha256 = "bd37a47206a44ff0c2357da566a3e2f8aed69c065c81eb3418c117186f803613"

@@ -1,0 +1,50 @@
+version = "v0.1.0"
+description = "Provisional vertical-slice scoring configuration; values are normalized 0-100 inputs."
+
+[confidence]
+medium_min_coverage = 0.50
+high_min_coverage = 0.80
+
+[dimensions.demand]
+weight = 0.14
+direction = "positive"
+
+[dimensions.competition_gap]
+weight = 0.10
+direction = "positive"
+
+[dimensions.margin]
+weight = 0.14
+direction = "positive"
+
+[dimensions.search_velocity]
+weight = 0.08
+direction = "positive"
+
+[dimensions.social_velocity]
+weight = 0.06
+direction = "positive"
+
+[dimensions.supplier_depth]
+weight = 0.10
+direction = "positive"
+
+[dimensions.shelf_stability]
+weight = 0.08
+direction = "positive"
+
+[dimensions.shipping]
+weight = 0.08
+direction = "positive"
+
+[dimensions.brandability]
+weight = 0.06
+direction = "positive"
+
+[dimensions.repeat_purchase]
+weight = 0.08
+direction = "positive"
+
+[dimensions.regulatory_risk]
+weight = 0.08
+direction = "negative"

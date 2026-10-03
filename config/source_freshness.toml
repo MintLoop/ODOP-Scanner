@@ -1,0 +1,75 @@
+version = "2026-10-03.1"
+
+[selection]
+checked_on = "2026-10-03"
+selected_source_id = "mofpi-odop-revised-2024-03-13"
+freshness_status = "checked_not_assumed_current"
+decision = "retain_2024_revised_list_as_v0_source_of_record"
+reason = "The live MoFPI ODOP landing page still designates the 2024-03-13 revised PDF as its downloadable list. Newer official publications retain 726 districts and report 137 unique products, but do not explicitly supersede that approval memorandum and contain conflicting district/product values. They are reconciliation evidence pending an authoritative replacement or reviewed reconciliation."
+searched_surfaces = [
+  "https://www.mofpi.gov.in/en/pmfme/one-district-one-product",
+  "https://odop.mofpi.gov.in/odop/",
+  "https://www.mofpi.gov.in/en/lok-sabha-qa",
+  "https://www.mofpi.gov.in/en/rajya-sabha-q-a",
+  "https://www.mofpi.gov.in/documents/reports/annual-report",
+  "https://www.mofpi.gov.in/announcements-archive",
+]
+
+[[observations]]
+id = "mofpi-odop-revised-2024-03-13"
+source_kind = "approved_revised_list"
+discovery_url = "https://www.mofpi.gov.in/en/pmfme/one-district-one-product"
+source_url = "https://www.mofpi.gov.in/sites/default/files/revised_list_of_odop_for_35_states_13.03.2024_1.pdf"
+published_or_revised_date = "2024-03-13"
+retrieval_date = "2026-10-03"
+sha256 = "bd37a47206a44ff0c2357da566a3e2f8aed69c065c81eb3418c117186f803613"
+supersedes_2024 = false
+row_count = 726
+product_family_count = 137
+row_count_change = "baseline"
+product_family_count_change = "baseline"
+disposition = "v0_source_of_record"
+notes = "The linked approval memorandum is dated 2024-03-14; the landing-page label and filename use 2024-03-13. The live landing page was retrieved on 2026-10-03 and still linked this document. The PDF states 726 districts; 137 is the official unique-product count later reported by MoFPI."
+
+[[observations]]
+id = "lok-sabha-question-525-2025-02-06"
+source_kind = "parliamentary_answer_with_full_annexure"
+discovery_url = "https://www.mofpi.gov.in/en/lok-sabha-qa"
+source_url = "https://www.mofpi.gov.in/sites/default/files/525.pdf"
+published_or_revised_date = "2025-02-06"
+retrieval_date = "2026-10-03"
+sha256 = "a03031e6cabfe04900192a9636384fc0800d866e6db9c2bbda7c5be89c49d125"
+supersedes_2024 = false
+row_count = 726
+row_count_change = "unchanged"
+product_family_count_change = "unknown"
+disposition = "reconciliation_source"
+notes = "The answer states that 726 district ODOPs were approved as of 2025-01-31 and includes a complete annexure. It changes wording and some district assignments relative to the revised 2024 PDF, but does not call itself a revision, replacement, or superseding approval. Its unique-product count is not stated."
+
+[[observations]]
+id = "mofpi-annual-report-2024-25"
+source_kind = "annual_report_with_odop_annexure"
+discovery_url = "https://www.mofpi.gov.in/documents/reports/annual-report"
+source_url = "https://www.mofpi.gov.in/sites/default/files/mofpi_annual_report_2024-25_english_21.08.2025.pdf"
+published_or_revised_date = "2025-08-21"
+retrieval_date = "2026-10-03"
+sha256 = "9d72b0aaaed996a381426b4679e6f32900ed936ddc462f4d9d850773f2df3805"
+supersedes_2024 = false
+row_count = 726
+product_family_count = 137
+row_count_change = "unchanged"
+product_family_count_change = "unchanged"
+disposition = "reconciliation_source"
+notes = "The report states 726 districts and 137 unique products, but its ODOP annexure reverts several Andhra Pradesh assignments that the 2024 approval memorandum explicitly revised. It is therefore not treated as a replacement list."
+
+[[observations]]
+id = "mofpi-odop-gis-portal"
+source_kind = "interactive_gis_portal"
+discovery_url = "https://www.mofpi.gov.in/en/pmfme/one-district-one-product"
+source_url = "https://odop.mofpi.gov.in/odop/"
+retrieval_date = "2026-10-03"
+supersedes_2024 = false
+row_count_change = "unknown"
+product_family_count_change = "unknown"
+disposition = "not_ingested"
+notes = "The portal was re-checked as an interactive GIS surface. No stable documented or appropriately inspectable downloadable dataset/API endpoint was verified, so it was not scraped or treated as a source snapshot."

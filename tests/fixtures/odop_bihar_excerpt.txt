@@ -1,0 +1,9 @@
+     5. BIHAR
+ Sl. No.         District                      ODOP
+ 1               Araria                        Makhana (Foxnut)
+ 9               Darbhanga                     Makhana (Foxnut)
+ 16              Katihar                       Makhana (Foxnut)
+ 21              Madhubani                     Makhana (Foxnut)
+ 29              Saharsa                       Makhana (Foxnut)
+ 36              Supaul                        Makhana (Foxnut)
+ TOTAL                                         6
