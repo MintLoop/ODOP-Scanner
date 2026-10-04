@@ -1,0 +1,110 @@
+{
+  "cheapest_next_experiment": "Request one landed-cost quote (factory, packaging, freight, duty, import overhead) plus an HTS or custom-house ruling for one verified supplier and the specific four-pack package, then reprice the LOW, BASE, and HIGH scenarios before trusting any contribution margin, using mk-ev-002-apeda-dashboard, mk-ev-007-bihari-bites, and mk-ev-011-fda-importing-food as the reference.",
+  "contract_version": "synthesizer-output-v1",
+  "deterministic_snapshot": {
+    "confidence_band": "none",
+    "decision_gate": "TEST",
+    "evidence_coverage": 0.0,
+    "max_recommended_spend_usd": 150.0,
+    "overall_score": null,
+    "score_id": "58aae5d307fd5adef2dcc862f05c471b02a1fee2d073b50130a193719c2ee282",
+    "validator_outcome": "UNKNOWN"
+  },
+  "executive_summary": {
+    "evidence_ids": [
+      "mk-ev-002-apeda-dashboard",
+      "mk-ev-003-amazon-snapshot",
+      "mk-ev-007-bihari-bites",
+      "mk-ev-011-fda-importing-food"
+    ],
+    "text": "Replaying the analyst, validator, and scout inputs in narrative-only mode, no ODOP metric that would move the product-001 (makhana / foxnut) decision is resolved. Every gated transform — demand, repeat purchase, margin, supplier depth, regulatory risk, shelf stability, shipping, competition, brandability, and search/social velocity — is reported as a missing transform, and the validator verdict is UNKNOWN. The economics input still only provides three unquoted sensitivity scenarios whose contribution-margin range is not reliable enough to change the deterministic snapshot, which therefore stays at TEST with overall_score null, evidence_coverage 0.0, confidence_band none, and no spend beyond the stated ceiling."
+  },
+  "product_family_id": "product-001",
+  "role": "Synthesizer",
+  "sections": {
+    "brandability": {
+      "evidence_ids": [
+        "mk-ev-015-name-screen"
+      ],
+      "text": "There is no approved brandability transform or trademark/domain clearance. The three exploratory names each carry descriptive, prior-use, terminology, or semantic risk, so no cleared name exists yet."
+    },
+    "competition": {
+      "evidence_ids": [
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-005-walmart-category"
+      ],
+      "text": "Result pages combine raw and ready-to-eat SKUs including established brands, duplicates, and sponsored placements, but no approved deduplicated share or concentration transform exists, so no reliable brand concentration or whitespace conclusion can be drawn."
+    },
+    "content_potential": {
+      "evidence_ids": [
+        "mk-ev-014-lotus-eaters-use"
+      ],
+      "text": "An existing media business can speak to audience reach, but no reproducible U.S. engagement or conversion series was captured and observed recipes, videos, and anecdotes cannot be converted from mention counts into demand."
+    },
+    "demand": {
+      "evidence_ids": [
+        "mk-ev-002-apeda-dashboard"
+      ],
+      "text": "No reproducible U.S. time series, sales panel, conversion series, or approved demand-proxy series was captured. Marketplace presence and APEDA mentions do not establish U.S. demand."
+    },
+    "economics": {
+      "evidence_ids": [
+        "mk-ev-002-apeda-dashboard",
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-004-whole-foods-asha",
+        "mk-ev-007-bihari-bites"
+      ],
+      "text": "The base DTC order is four 1 oz packs; across the LOW, BASE, and HIGH sensitivity scenarios contribution margin before payment processing is roughly $2.00 to $3.80, with DTC payment processing further reducing it by 2.9 percent plus $0.30 per order. Every cost input is a deliberately broad sensitivity assumption, not a supplier, freight, customs, or fulfillment quote, so the margin is not reliable enough to support a decision."
+    },
+    "market": {
+      "evidence_ids": [
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-005-walmart-category"
+      ],
+      "text": "Makhana has U.S. marketplace presence across search and category pages, but those pages mix raw and ready-to-eat products, duplicates, and sponsored cards. The approved deduplicated brand-share or concentration transform is missing, so true competitive density cannot be established."
+    },
+    "product": {
+      "evidence_ids": [
+        "mk-ev-009-food-fragility-study"
+      ],
+      "text": "The proposed product is a 1 oz pack of roasted makhana sold as a four-pack DTC order. Physical research supports fragility and low density but no finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained."
+    },
+    "regulatory_friction": {
+      "evidence_ids": [
+        "mk-ev-011-fda-importing-food",
+        "mk-ev-012-fsvp",
+        "mk-ev-013-fda-labeling"
+      ],
+      "text": "General import duties are identifiable, but the exact regulatory formula is unresolved: exact HTS classification, tariff stack, APHIS treatment, food facility status, FSVP importer obligation, and food-label claims under FSMA still need to be checked against FDA importing, FSVP, and labeling rules."
+    },
+    "supply": {
+      "evidence_ids": [
+        "mk-ev-007-bihari-bites",
+        "mk-ev-008-purnia-supplier"
+      ],
+      "text": "Multiple suppliers claim private-label and export capability, but no independent entity verification, quote, certificate, COA, sample, or on-time performance record exists. Supplier depth remains an unresolved gap."
+    }
+  },
+  "status": "SUCCESS",
+  "strongest_case_against": {
+    "evidence_ids": [
+      "mk-ev-011-fda-importing-food",
+      "mk-ev-010-amazon-fees"
+    ],
+    "text": "Every metric that gates a market-entry decision remains a missing transform backed by broad cost assumptions, unverified suppliers, and unresolved import regulations, the validator verdict is UNKNOWN, and the deterministic snapshot stays at TEST with overall_score null. There is therefore no reliable basis to promote product-001, only enough residual fragility and unverified cost to justify further cheap verification."
+  },
+  "top_risks": [
+    "UnVerifier landed cost makes the contribution-margin scenarios unreliable as a basis for a decision.",
+    "Lack of demand and repeat-purchase evidence means monthly contribution cannot be turned into cash without finding real buyers.",
+    "Import regulatory exposure under FSVP, FDA, customs, the tariff stack, and labeling is unidentified and could block entry or force expensive rework.",
+    "Unproven supplier depth combined with the roasting fragility of makhana raises breakage and spoilage risk that no scenario prices in.",
+    "No cleared name exists; the exploratory options carry descriptive, prior-use, terminology, and semantic brandability risks."
+  ],
+  "top_unknowns": [
+    "Actual landed cost (factory, packaging, freight, duty, and import overhead) has no supplier, freight, custom-house, or fulfillment quote; the scenarios are broad assumptions, not facts.",
+    "No reproducible U.S. demand, sales, conversion, or repeat-purchase series exists to pair with the three margin scenarios.",
+    "Exact import regulatory formula — HTS classification, tariff stack, APHIS treatment, FSVP importer, food facility status, and label claims — is unresolved.",
+    "No independent supplier entity verification, certificate, COA, sample, or on-time performance record exists for any makhana supplier.",
+    "No finished-product shelf-life study tied to the proposed four-pack package, no commercial package dimensions, and no damage or breakage data."
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "accepted_evidence_ids": [
+    "mk-ev-001-apeda-market-study",
+    "mk-ev-002-apeda-dashboard",
+    "mk-ev-003-amazon-snapshot",
+    "mk-ev-004-whole-foods-asha",
+    "mk-ev-005-walmart-category",
+    "mk-ev-007-bihari-bites",
+    "mk-ev-008-purnia-supplier",
+    "mk-ev-009-food-fragility-study",
+    "mk-ev-010-amazon-fees",
+    "mk-ev-011-fda-importing-food",
+    "mk-ev-012-fsvp",
+    "mk-ev-013-fda-labeling",
+    "mk-ev-014-lotus-eaters-use",
+    "mk-ev-016-amazon-fba-fees"
+  ],
+  "contract_version": "scout-output-v1",
+  "evidence_assessment": [
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-001-apeda-market-study",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-002-apeda-dashboard",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-003-amazon-snapshot",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-004-whole-foods-asha",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-005-walmart-category",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-007-bihari-bites",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-008-purnia-supplier",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-009-food-fragility-study",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-010-amazon-fees",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-011-fda-importing-food",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-012-fsvp",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-013-fda-labeling",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-014-lotus-eaters-use",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "ACCEPTED",
+      "evidence_id": "mk-ev-016-amazon-fba-fees",
+      "rationale": "Accepted as per acceptance_state"
+    },
+    {
+      "disposition": "UNVERIFIED",
+      "evidence_id": "mk-ev-006-asha-brand",
+      "rationale": "Unverified evidence"
+    },
+    {
+      "disposition": "UNVERIFIED",
+      "evidence_id": "mk-ev-015-name-screen",
+      "rationale": "Unverified evidence"
+    }
+  ],
+  "missing_evidence": [],
+  "product_family_id": "product-001",
+  "rejected_evidence_ids": [],
+  "role": "Scout",
+  "status": "SUCCESS",
+  "summary": "The evidence set includes 14 accepted observations/findings, 3 unverified observations, and no rejected items. All accepted evidence IDs are listed, and unverified IDs are noted. No missing evidence was identified. The existing feature gaps remain unresolved.",
+  "unresolved_factual_gaps": [
+    "brandability",
+    "competition_gap",
+    "demand",
+    "margin",
+    "regulatory_risk",
+    "repeat_purchase",
+    "search_velocity",
+    "shelf_stability",
+    "shipping",
+    "social_velocity",
+    "supplier_depth"
+  ],
+  "unverified_evidence_ids": [
+    "mk-ev-006-asha-brand",
+    "mk-ev-015-name-screen"
+  ]
+}

@@ -186,6 +186,29 @@ separation between Analyst and Validator is visible in native receipts, but the 
 Validator independence or orchestration verified because the Validator artifact never passed its
 contract.
 
+### Validator contract hardening replay
+
+The follow-up replay kept the same Product #001 evidence packet, score configuration, gate
+configuration, and Menta routes. The Validator prompt now enumerates the exact top-level and finding
+keys, enums, and permitted evidence IDs. Invalid Validator output may receive one schema-repair call
+on the same resolved route/model; both responses and validation errors are persisted, semantic fields
+must remain unchanged, and a second failure blocks Synthesizer dispatch. The live run did not need
+that repair: the initial Validator output passed the strict contract with verdict `UNKNOWN`, after
+which Synthesizer was dispatched. The successful benchmark is preserved under
+[`dogfood/runs/product-001-20261004T221455Z-43cb2a1e/`](dogfood/runs/product-001-20261004T221455Z-43cb2a1e/).
+
+| Role | Requested profile | Observed model | Duration | Tokens in/out | Cost | Status |
+|---|---|---|---:|---:|---:|---|
+| Scout | `research.analyst` | `custom/gpt-oss:120b` | 67.814 s | 9,889 / 1,446 | UNKNOWN | validated |
+| Market Analyst | `biz.strategy-finance` | `custom/granite4.2:30b` | 292.482 s | 12,212 / 2,462 | UNKNOWN | validated |
+| Validator | `assure.evidence` | `custom/nemotron3:33b` | 86.726 s | 14,717 / 3,144 | UNKNOWN | validated; `UNKNOWN` verdict |
+| Synthesizer | `product.strategy-ux` | `custom/ornith-1.5:35b` | 77.540 s | 9,545 / 3,897 | UNKNOWN | validated |
+
+Overall wall time was 525.635 seconds across four exposed model calls. The repair path was not used,
+so repair latency and repair tokens are `UNKNOWN`. Tool-call count and total cost remain `UNKNOWN`.
+Validator independence and four-role orchestration are verified. The deterministic state is unchanged:
+score `unscored`, 0% evidence coverage, zero populated metrics, eleven NULL metrics, and gate `TEST`.
+
 By default, the DuckDB database is `data/odop.duckdb` and immutable source snapshots are placed under
 `data/raw/`. Both are intentionally ignored by Git. Re-running ingestion is idempotent for identical
 source bytes because source and row IDs are content-derived.

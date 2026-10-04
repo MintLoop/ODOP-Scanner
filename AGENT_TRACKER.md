@@ -376,3 +376,43 @@ response as a valid Validator artifact.
 
 Validation: Ruff formatting/lint, strict mypy, and 37 pytest tests pass. No research, outreach,
 purchase, publication, launch, or push was performed.
+
+## 2026-10-04 — Validator contract hardening
+
+Status: complete; four-role Hermes/Menta benchmark `GO`.
+
+The prior failure was contract-shape drift from the independently routed Validator: misspelled
+top-level keys and `evidence_ids` keys caused strict schema rejection. The harness remained correct to
+fail closed. This slice hardened the Validator prompt with exact keys, enums, and the live evidence-ID
+allowlist, added complete schema-error capture, and added one bounded schema-repair attempt on the same
+resolved route/model. Repair output is strictly revalidated and rejected if it changes verdict,
+finding semantics, evidence IDs, top-level identity, or status. Synthesizer remains gated on an
+accepted Validator artifact.
+
+### Live replay
+
+Artifact: `dogfood/runs/product-001-20261004T221455Z-43cb2a1e/benchmark.json`
+
+| Role | Profile | Observed provider/model | Duration | Input/output tokens | Artifact status |
+|---|---|---|---:|---:|---|
+| Scout | `research.analyst` | `custom/gpt-oss:120b` | 67.814 s | 9,889 / 1,446 | validated |
+| Market Analyst | `biz.strategy-finance` | `custom/granite4.2:30b` | 292.482 s | 12,212 / 2,462 | validated |
+| Validator | `assure.evidence` | `custom/nemotron3:33b` | 86.726 s | 14,717 / 3,144 | validated; `UNKNOWN` verdict |
+| Synthesizer | `product.strategy-ux` | `custom/ornith-1.5:35b` | 77.540 s | 9,545 / 3,897 | validated |
+
+- Initial Validator validation errors: none.
+- Validator repair: not used; repair latency and tokens `UNKNOWN`.
+- Total wall-clock runtime: 525.635 seconds; model calls: 4.
+- Tool calls, service class, and total cost: `UNKNOWN`.
+- Validator independence: verified from distinct Analyst and Validator profiles/provider-model pairs.
+- Synthesizer dispatch: occurred only after the Validator artifact was accepted.
+- Evidence packet SHA-256 remained
+  `287bb982e92b27295150414d7b2e582ff2b7f9487fc797cbf105f28e6185b9c6`; no evidence was collected or
+  changed.
+- Deterministic score ID remained
+  `58aae5d307fd5adef2dcc862f05c471b02a1fee2d073b50130a193719c2ee282`: score `unscored`, coverage 0%,
+  zero populated metrics, eleven NULL metrics, confidence `none`, and decision gate `TEST`.
+- Final orchestration status: `GO`.
+
+Validation: Ruff formatting/lint, strict mypy, and 54 pytest tests pass. No scoring formula, threshold,
+evidence, gate, route mapping, or non-Validator role contract changed. No push was performed.

@@ -1,0 +1,115 @@
+{
+  "assumptions": [
+    "Interpret only; deterministic feature values are immutable.",
+    "Retail equals four times the observed Whole Foods one-ounce price for LOW scenario.",
+    "Costs deliberately stress freight, duty, import overhead, and fulfillment across all scenarios.",
+    "DTC payment processing is assumed at 2.9% plus $0.30 per transaction.",
+    "Scenarios exclude CAC, storage, returns, spoilage, breakage, discounts, tax, overhead, and chargebacks.",
+    "All cost inputs are broad sensitivity assumptions, not quotes or supplier contracts.",
+    "The product is a 1 oz pack of roasted makhana sold as a four-pack DTC order.",
+    "Evidence IDs referenced are verbatim from input; no new IDs are invented.",
+    "Unresolved factual gaps remain unresolved; no additional evidence is assumed."
+  ],
+  "contract_version": "analyst-output-v1",
+  "economics_interpretation": {
+    "interpretation": "Using the three sensitivity scenarios provided, unit contribution margins range from approximately $2.00 to $3.80 before payment processing and fixed fees. Contribution is highly sensitive to landed cost structure (factory, packaging, freight, duty, import overhead) and retail price. Retail price assumptions are anchored to observed marketplace premiums. Payment processing reduces effective margin by ~3.0% plus $0.30 fixed per order. No conclusion on overall business viability can be drawn without actual supplier quotes, fulfillment contracts, breakage rates, and demand forecasts.",
+    "limitations": [
+      "Scenarios exclude CAC, storage, returns, spoilage, breakage, discounts, tax, overhead, and chargebacks as per input constraint.",
+      "All cost inputs are broad sensitivity assumptions, not supplier quotes or contracts.",
+      "No actual demand, conversion, or sales data exists to pair with margin scenarios.",
+      "Retail price anchors are observations, not forecasts or commitments.",
+      "Landed cost components (freight, duty, import overhead) are not verified with a tariff classification or logistics quote.",
+      "Fixed payment fee and rate are assumptions; actual processor terms may vary."
+    ],
+    "scenario_names": [
+      "LOW (downside contribution)",
+      "BASE (working hypothesis)",
+      "HIGH (upside contribution)"
+    ]
+  },
+  "metric_mapping": {
+    "brandability": {
+      "evidence_ids": [],
+      "interpretation": "No approved brandability transform or trademark/domain clearance; all three exploratory names have descriptive, prior-use, terminology, or semantic risks.",
+      "missing_reason": "No approved brandability transform or trademark/domain clearance; all three exploratory names have descriptive, prior-use, terminology, or semantic risks.",
+      "state": "MISSING"
+    },
+    "competition_gap": {
+      "evidence_ids": [],
+      "interpretation": "Marketplace result pages mix raw and ready-to-eat products, duplicates, and sponsored cards; no approved deduplicated brand-share or concentration transform exists.",
+      "missing_reason": "Marketplace result pages mix raw and ready-to-eat products, duplicates, and sponsored cards; no approved deduplicated brand-share or concentration transform exists.",
+      "state": "MISSING"
+    },
+    "demand": {
+      "evidence_ids": [],
+      "interpretation": "No reproducible U.S. sales, panel, conversion, or approved demand-proxy series; marketplace presence and mentions do not establish demand.",
+      "missing_reason": "No reproducible U.S. sales, panel, conversion, or approved demand-proxy series; marketplace presence and mentions do not establish demand.",
+      "state": "MISSING"
+    },
+    "margin": {
+      "evidence_ids": [],
+      "interpretation": "Sensitivity scenarios are not quotes; landed cost lacks a supplier quote, freight quote, product-specific tariff ruling, customs overhead, fulfillment contract, and measured breakage.",
+      "missing_reason": "Sensitivity scenarios are not quotes; landed cost lacks a supplier quote, freight quote, product-specific tariff ruling, customs overhead, fulfillment contract, and measured breakage.",
+      "state": "MISSING"
+    },
+    "regulatory_risk": {
+      "evidence_ids": [],
+      "interpretation": "General duties are identifiable, but exact formula, claims, facility status, FSVP importer, HTS classification, tariff stack, and APHIS treatment are unresolved.",
+      "missing_reason": "General duties are identifiable, but exact formula, claims, facility status, FSVP importer, HTS classification, tariff stack, and APHIS treatment are unresolved.",
+      "state": "MISSING"
+    },
+    "repeat_purchase": {
+      "evidence_ids": [],
+      "interpretation": "No cohort, reorder, household panel, or measured consumption-cadence evidence exists.",
+      "missing_reason": "No cohort, reorder, household panel, or measured consumption-cadence evidence exists.",
+      "state": "MISSING"
+    },
+    "search_velocity": {
+      "evidence_ids": [],
+      "interpretation": "No reproducible U.S. time series with provider version, date window, and request identity was captured.",
+      "missing_reason": "No reproducible U.S. time series with provider version, date window, and request identity was captured.",
+      "state": "MISSING"
+    },
+    "shelf_stability": {
+      "evidence_ids": [],
+      "interpretation": "No finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained.",
+      "missing_reason": "No finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained.",
+      "state": "MISSING"
+    },
+    "shipping": {
+      "evidence_ids": [],
+      "interpretation": "Physical research supports fragility and low density, but commercial package dimensions, zone rates, damage tests, and breakage allowances are absent.",
+      "missing_reason": "Physical research supports fragility and low density, but commercial package dimensions, zone rates, damage tests, and breakage allowances are absent.",
+      "state": "MISSING"
+    },
+    "social_velocity": {
+      "evidence_ids": [],
+      "interpretation": "Observed recipes, videos, and anecdotes lack a reproducible U.S. time series and cannot be converted from mention counts into demand.",
+      "missing_reason": "Observed recipes, videos, and anecdotes lack a reproducible U.S. time series and cannot be converted from mention counts into demand.",
+      "state": "MISSING"
+    },
+    "supplier_depth": {
+      "evidence_ids": [],
+      "interpretation": "Multiple suppliers claim capability, but no independent entity verification, quote, certificate, audit, COA, sample, or on-time performance evidence exists.",
+      "missing_reason": "Multiple suppliers claim capability, but no independent entity verification, quote, certificate, audit, COA, sample, or on-time performance evidence exists.",
+      "state": "MISSING"
+    }
+  },
+  "product_family_id": "product-001",
+  "role": "Market Analyst",
+  "status": "SUCCESS",
+  "summary": "Interpretation of deterministic feature gaps using available evidence; no actionable conclusions for market entry due to unresolved factual gaps across all ODOP metrics.",
+  "unresolved": [
+    "brandability",
+    "competition_gap",
+    "demand",
+    "margin",
+    "regulatory_risk",
+    "repeat_purchase",
+    "search_velocity",
+    "shelf_stability",
+    "shipping",
+    "social_velocity",
+    "supplier_depth"
+  ]
+}

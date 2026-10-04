@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -26,11 +27,12 @@ EVIDENCE_PATH = project_root() / "evidence" / "makhana" / "makhana.evidence.v1.j
 
 @dataclass
 class FakeExecutor:
-    outputs: dict[str, dict[str, Any]]
+    outputs: dict[str, Any]
     missing_role: str | None = None
     invalid_role: str | None = None
     unknown_telemetry: bool = False
     project_error: bool = False
+    calls: list[str] = field(default_factory=list)
 
     def check_project(self, config: Any) -> str:
         if self.project_error:
@@ -42,7 +44,12 @@ class FakeExecutor:
     ) -> RuntimeExecution:
         del prompt, usage_path, config
         started = datetime(2026, 10, 4, tzinfo=UTC)
-        stdout = json.dumps(self.outputs[route.role])
+        call_name = route.role
+        if route.role == "validator" and "validator" in self.calls:
+            call_name = "validator_repair"
+        self.calls.append(call_name)
+        response = self.outputs.get(call_name, self.outputs[route.role])
+        stdout = response if isinstance(response, str) else json.dumps(response)
         if route.role == self.missing_role:
             stdout = ""
         elif route.role == self.invalid_role:
@@ -410,3 +417,84 @@ def test_profile_resolution_rejects_analyst_validator_model_collision(tmp_path: 
 
     with pytest.raises(RoutingError, match="producer provider/model"):
         MentaProfileResolver(load_routing_config(config_path)).resolve_all()
+
+
+def test_validator_one_pass_repair_succeeds_before_synthesizer_dispatch(
+    tmp_path: Path,
+) -> None:
+    outputs = _valid_outputs()
+    valid_validator = deepcopy(outputs["validator"])
+    invalid_validator = deepcopy(valid_validator)
+    invalid_validator["contract_contract_version"] = invalid_validator.pop("contract_version")
+    outputs["validator"] = invalid_validator
+    outputs["validator_repair"] = valid_validator
+    executor = FakeExecutor(outputs)
+
+    output, database_path = _run(tmp_path, executor)
+
+    assert output["status"] == "GO"
+    assert executor.calls == ["scout", "analyst", "validator", "validator_repair", "synthesizer"]
+    benchmark = json.loads(Path(output["benchmark"]).read_text(encoding="utf-8"))
+    assert benchmark["validator_repair"]["used"] is True
+    assert benchmark["validator_repair"]["repair_validation_result"] == "ACCEPTED"
+    assert benchmark["validator_repair"]["initial_validation_errors"]
+    assert benchmark["validator_independence_verified"] is True
+    assert benchmark["control_comparison"]["deterministic_result_unchanged"] is True
+    assert Path(output["artifact_directory"], "validator.output.json").is_file()
+    assert Path(output["artifact_directory"], "synthesizer.output.json").is_file()
+
+    connection = duckdb.connect(str(database_path), read_only=True)
+    validator_runs = connection.execute(
+        "SELECT agent, status FROM agent_runs WHERE agent LIKE 'Validator%' ORDER BY started_at"
+    ).fetchall()
+    connection.close()
+    assert validator_runs == [("Validator", "failed"), ("Validator Repair", "succeeded")]
+
+
+def test_validator_repair_failure_is_bounded_and_blocks_synthesizer(tmp_path: Path) -> None:
+    outputs = _valid_outputs()
+    invalid_validator = deepcopy(outputs["validator"])
+    invalid_validator["unknown_top_level"] = True
+    outputs["validator"] = invalid_validator
+    outputs["validator_repair"] = invalid_validator
+    executor = FakeExecutor(outputs)
+
+    output, _ = _run(tmp_path, executor)
+
+    assert output["status"] == "BLOCKED"
+    assert executor.calls == ["scout", "analyst", "validator", "validator_repair"]
+    assert executor.calls.count("validator_repair") == 1
+    assert "Validator repair failed after one attempt" in output["blocked_reason"]
+    artifact_directory = Path(output["artifact_directory"])
+    assert (artifact_directory / "validator.initial.validation-errors.json").is_file()
+    assert (artifact_directory / "validator.repair.validation-errors.json").is_file()
+    assert not (artifact_directory / "synthesizer.input.json").exists()
+
+
+def test_validator_repair_cannot_change_unknown_evidence_id(tmp_path: Path) -> None:
+    outputs = _valid_outputs()
+    invalid_validator = deepcopy(outputs["validator"])
+    invalid_validator["findings"][0]["evidence_ids"] = ["unknown-evidence-id"]
+    outputs["validator"] = invalid_validator
+    outputs["validator_repair"] = deepcopy(_valid_outputs()["validator"])
+    executor = FakeExecutor(outputs)
+
+    output, _ = _run(tmp_path, executor)
+
+    assert output["status"] == "BLOCKED"
+    assert "changed finding 0 semantic field evidence_ids" in output["blocked_reason"]
+    assert executor.calls.count("validator_repair") == 1
+    assert "synthesizer" not in executor.calls
+
+
+def test_malformed_validator_json_can_use_one_repair_attempt(tmp_path: Path) -> None:
+    outputs: dict[str, Any] = _valid_outputs()
+    outputs["validator"] = '{"contract_version":'
+    outputs["validator_repair"] = deepcopy(_valid_outputs()["validator"])
+    executor = FakeExecutor(outputs)
+
+    output, _ = _run(tmp_path, executor)
+
+    assert output["status"] == "GO"
+    assert executor.calls.count("validator_repair") == 1
+    assert executor.calls[-1] == "synthesizer"

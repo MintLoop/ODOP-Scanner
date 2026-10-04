@@ -1,0 +1,38 @@
+{
+  "contract_version": "validator-output-v1",
+  "role": "Validator",
+  "product_family_id": "product-001",
+  "status": "SUCCESS",
+  "verdict": "UNKNOWN",
+  "strongest_case_against_promotion": "Sensitivity scenarios rely on broad assumptions with no actual quotes, lack of demand data, and uncertain regulatory and cost components, preventing reliable viability assessment.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "severity": "high",
+      "status": "open",
+      "title": "Contribution margin highly uncertain due to unverified landed cost assumptions",
+      "strongest_case": "No actual supplier quotes for landed cost components, unclear breakage rates, and payment processing fees reduce margin by 3% plus $0.30 per order, making margins unreliable.",
+      "affected_features": ["margin"],
+      "evidence_ids": [
+        "mk-ev-010-amazon-fees",
+        "mk-ev-011-fda-importing-food",
+        "mk-ev-012-fsvp",
+        "mk-ev-013-fda-labeling"
+      ],
+      "recommended_action": "Obtain concrete landed cost quotes and verify breakage rates before market entry."
+    }
+  ],
+  "unresolved": [
+    "brandability",
+    "competition_gap",
+    "demand",
+    "margin",
+    "regulatory_risk",
+    "repeat_purchase",
+    "search_velocity",
+    "shelf_stability",
+    "shipping",
+    "social_velocity",
+    "supplier_depth"
+  ]
+}

@@ -34,9 +34,12 @@ from ..storage import (
 )
 from .contracts import (
     ContractError,
+    assert_validator_repair_preserves_semantics,
     build_role_prompt,
+    build_validator_repair_prompt,
     load_schema,
     parse_structured_response,
+    role_validation_errors,
     sha256_value,
     validate_role_output,
 )
@@ -329,11 +332,9 @@ class RoleChainRunner:
                 "deterministic_score": score_as_dict(score_before),
                 "constraint": "Audit independently; do not assume producer conclusions are true.",
             }
-            artifacts["validator"] = self._run_stage(
-                role="validator",
+            artifacts["validator"] = self._run_validator_stage(
                 route=routes["validator"],
                 payload=validator_payload,
-                packet=packet,
                 config=config,
                 artifact_directory=artifact_directory,
                 chain_run_id=chain_run_id,
@@ -518,6 +519,289 @@ class RoleChainRunner:
             "artifact_directory": str(artifact_directory),
         }
 
+    def _run_validator_stage(
+        self,
+        *,
+        route: ResolvedRoute,
+        payload: Mapping[str, Any],
+        config: RoutingConfig,
+        artifact_directory: Path,
+        chain_run_id: str,
+        family_id: str,
+        known_evidence_ids: set[str],
+        receipts: list[dict[str, Any]],
+        connection: Any,
+    ) -> dict[str, Any]:
+        schema = load_schema(route.schema_path)
+        input_path = artifact_directory / "validator.input.json"
+        output_path = artifact_directory / "validator.output.json"
+        initial_raw_path = artifact_directory / "validator.initial.raw.txt"
+        initial_usage_path = artifact_directory / "validator.initial.usage.json"
+        initial_errors_path = artifact_directory / "validator.initial.validation-errors.json"
+        input_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True, default=str) + "\n",
+            encoding="utf-8",
+        )
+        initial_prompt = build_role_prompt(
+            route.label,
+            schema,
+            payload,
+            known_evidence_ids=known_evidence_ids,
+        )
+        try:
+            initial_execution = self.executor.execute(
+                route=route,
+                prompt=initial_prompt,
+                usage_path=initial_usage_path,
+                config=config,
+            )
+        except Exception as execution_error:
+            now = datetime.now(UTC)
+            receipt = _receipt(
+                chain_run_id=chain_run_id,
+                role="validator",
+                run_suffix="validator-initial",
+                agent_label="Validator",
+                route=route,
+                execution=RuntimeExecution("", str(execution_error), {}, now, now, 0, 127),
+                prompt=initial_prompt,
+                artifact=None,
+                output_path=None,
+                evidence_ids=known_evidence_ids,
+                error=execution_error,
+                attempt_kind="initial",
+            )
+            receipts.append(receipt)
+            store_agent_runs(connection, family_id, [receipt])
+            raise RoleChainError(
+                f"Validator execution failed: {execution_error}"
+            ) from execution_error
+
+        initial_raw_path.write_text(initial_execution.stdout, encoding="utf-8")
+        runtime_error = _runtime_execution_error("Validator", initial_execution)
+        if runtime_error is not None or not initial_execution.stdout.strip():
+            error = runtime_error or ContractError("Validator output artifact is missing")
+            receipt = _receipt(
+                chain_run_id=chain_run_id,
+                role="validator",
+                run_suffix="validator-initial",
+                agent_label="Validator",
+                route=route,
+                execution=initial_execution,
+                prompt=initial_prompt,
+                artifact=None,
+                output_path=initial_raw_path,
+                evidence_ids=known_evidence_ids,
+                error=error,
+                raw_output=initial_execution.stdout,
+                attempt_kind="initial",
+            )
+            receipts.append(receipt)
+            store_agent_runs(connection, family_id, [receipt])
+            raise error
+
+        initial_artifact: dict[str, Any] | None = None
+        try:
+            initial_artifact = parse_structured_response(initial_execution.stdout)
+            initial_errors = role_validation_errors(
+                role="validator",
+                artifact=initial_artifact,
+                schema=schema,
+                product_family_id=family_id,
+                evidence_ids=known_evidence_ids,
+            )
+        except ContractError as parse_error:
+            initial_errors = (str(parse_error),)
+
+        if not initial_errors:
+            assert initial_artifact is not None
+            output_path.write_text(
+                json.dumps(initial_artifact, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            receipt = _receipt(
+                chain_run_id=chain_run_id,
+                role="validator",
+                run_suffix="validator-initial",
+                agent_label="Validator",
+                route=route,
+                execution=initial_execution,
+                prompt=initial_prompt,
+                artifact=initial_artifact,
+                output_path=output_path,
+                evidence_ids=known_evidence_ids,
+                error=None,
+                raw_output=initial_execution.stdout,
+                attempt_kind="initial",
+                repair_validation_result="NOT_USED",
+            )
+            receipts.append(receipt)
+            store_agent_runs(connection, family_id, [receipt])
+            return initial_artifact
+
+        _write_validation_errors(
+            initial_errors_path,
+            attempt="initial",
+            errors=initial_errors,
+            response=initial_execution.stdout,
+        )
+        initial_error = ContractError(" | ".join(initial_errors))
+        initial_receipt = _receipt(
+            chain_run_id=chain_run_id,
+            role="validator",
+            run_suffix="validator-initial",
+            agent_label="Validator",
+            route=route,
+            execution=initial_execution,
+            prompt=initial_prompt,
+            artifact=None,
+            output_path=initial_raw_path,
+            evidence_ids=known_evidence_ids,
+            error=initial_error,
+            raw_output=initial_execution.stdout,
+            attempt_kind="initial",
+            validation_errors=initial_errors,
+            repair_validation_result="REPAIR_REQUESTED",
+        )
+        receipts.append(initial_receipt)
+        store_agent_runs(connection, family_id, [initial_receipt])
+
+        repair_input_path = artifact_directory / "validator.repair.input.json"
+        repair_raw_path = artifact_directory / "validator.repair.raw.txt"
+        repair_usage_path = artifact_directory / "validator.repair.usage.json"
+        repair_errors_path = artifact_directory / "validator.repair.validation-errors.json"
+        repair_input = {
+            "attempt": "validator-schema-repair-1-of-1",
+            "original_input_artifact": str(input_path),
+            "invalid_response": initial_execution.stdout,
+            "validation_errors": list(initial_errors),
+            "known_evidence_ids": sorted(known_evidence_ids),
+            "semantic_change_forbidden": True,
+        }
+        repair_input_path.write_text(
+            json.dumps(repair_input, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        repair_prompt = build_validator_repair_prompt(
+            schema=schema,
+            payload=payload,
+            invalid_response=initial_execution.stdout,
+            validation_errors=initial_errors,
+            known_evidence_ids=known_evidence_ids,
+        )
+        try:
+            repair_execution = self.executor.execute(
+                route=route,
+                prompt=repair_prompt,
+                usage_path=repair_usage_path,
+                config=config,
+            )
+        except Exception as execution_error:
+            now = datetime.now(UTC)
+            receipt = _receipt(
+                chain_run_id=chain_run_id,
+                role="validator",
+                run_suffix="validator-repair",
+                agent_label="Validator Repair",
+                route=route,
+                execution=RuntimeExecution("", str(execution_error), {}, now, now, 0, 127),
+                prompt=repair_prompt,
+                artifact=None,
+                output_path=None,
+                evidence_ids=known_evidence_ids,
+                error=execution_error,
+                attempt_kind="repair",
+                validation_errors=(str(execution_error),),
+                repair_validation_result="FAILED",
+            )
+            receipts.append(receipt)
+            store_agent_runs(connection, family_id, [receipt])
+            raise RoleChainError(
+                f"Validator repair execution failed: {execution_error}"
+            ) from execution_error
+
+        repair_raw_path.write_text(repair_execution.stdout, encoding="utf-8")
+        repair_runtime_error = _runtime_execution_error("Validator repair", repair_execution)
+        repaired_artifact: dict[str, Any] | None = None
+        repair_errors: tuple[str, ...]
+        if repair_runtime_error is not None:
+            repair_errors = (str(repair_runtime_error),)
+        elif not repair_execution.stdout.strip():
+            repair_errors = ("Validator repair output artifact is missing",)
+        else:
+            try:
+                repaired_artifact = parse_structured_response(repair_execution.stdout)
+                repair_errors = role_validation_errors(
+                    role="validator",
+                    artifact=repaired_artifact,
+                    schema=schema,
+                    product_family_id=family_id,
+                    evidence_ids=known_evidence_ids,
+                )
+                if not repair_errors:
+                    assert_validator_repair_preserves_semantics(
+                        initial_artifact,
+                        repaired_artifact,
+                    )
+            except ContractError as caught_repair_error:
+                repair_errors = (str(caught_repair_error),)
+
+        if repair_errors:
+            _write_validation_errors(
+                repair_errors_path,
+                attempt="repair",
+                errors=repair_errors,
+                response=repair_execution.stdout,
+            )
+            final_repair_error = ContractError(
+                f"Validator repair failed after one attempt: {' | '.join(repair_errors)}"
+            )
+            receipt = _receipt(
+                chain_run_id=chain_run_id,
+                role="validator",
+                run_suffix="validator-repair",
+                agent_label="Validator Repair",
+                route=route,
+                execution=repair_execution,
+                prompt=repair_prompt,
+                artifact=None,
+                output_path=repair_raw_path,
+                evidence_ids=known_evidence_ids,
+                error=final_repair_error,
+                raw_output=repair_execution.stdout,
+                attempt_kind="repair",
+                validation_errors=repair_errors,
+                repair_validation_result="REJECTED",
+            )
+            receipts.append(receipt)
+            store_agent_runs(connection, family_id, [receipt])
+            raise final_repair_error
+
+        assert repaired_artifact is not None
+        output_path.write_text(
+            json.dumps(repaired_artifact, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        receipt = _receipt(
+            chain_run_id=chain_run_id,
+            role="validator",
+            run_suffix="validator-repair",
+            agent_label="Validator Repair",
+            route=route,
+            execution=repair_execution,
+            prompt=repair_prompt,
+            artifact=repaired_artifact,
+            output_path=output_path,
+            evidence_ids=known_evidence_ids,
+            error=None,
+            raw_output=repair_execution.stdout,
+            attempt_kind="repair",
+            repair_validation_result="ACCEPTED",
+        )
+        receipts.append(receipt)
+        store_agent_runs(connection, family_id, [receipt])
+        return repaired_artifact
+
     def _run_stage(
         self,
         *,
@@ -545,7 +829,12 @@ class RoleChainRunner:
             json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True, default=str) + "\n",
             encoding="utf-8",
         )
-        prompt = build_role_prompt(route.label, schema, payload)
+        prompt = build_role_prompt(
+            route.label,
+            schema,
+            payload,
+            known_evidence_ids=known_evidence_ids if role == "validator" else None,
+        )
         try:
             execution = self.executor.execute(
                 route=route,
@@ -631,6 +920,12 @@ def _receipt(
     output_path: Path | None,
     evidence_ids: set[str],
     error: Exception | None,
+    run_suffix: str | None = None,
+    agent_label: str | None = None,
+    raw_output: str | None = None,
+    attempt_kind: str = "role",
+    validation_errors: tuple[str, ...] = (),
+    repair_validation_result: str = "NOT_APPLICABLE",
 ) -> dict[str, Any]:
     usage = execution.usage
     actual_provider = _known_string(usage.get("provider"))
@@ -644,9 +939,16 @@ def _receipt(
     amount = reported_amount if cost_is_known else None
     cost_state = "ESTIMATED" if amount is not None else "UNKNOWN"
     references = _collect_evidence_refs(artifact, evidence_ids) if artifact else []
+    output_sha256 = (
+        sha256_value(artifact)
+        if artifact is not None
+        else hashlib.sha256(raw_output.encode("utf-8")).hexdigest()
+        if raw_output is not None
+        else None
+    )
     return {
-        "run_id": f"{chain_run_id}-{role}",
-        "agent": route.label,
+        "run_id": f"{chain_run_id}-{run_suffix or role}",
+        "agent": agent_label or route.label,
         "model": actual_model,
         "route": (
             f"hermes-oneshot:{actual_provider}/{actual_model}"
@@ -671,11 +973,14 @@ def _receipt(
             "MEASURED" if input_tokens is not None and output_tokens is not None else "UNKNOWN"
         ),
         "input_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
-        "output_sha256": sha256_value(artifact) if artifact else None,
+        "output_sha256": output_sha256,
         "evidence_refs": references,
         "error_class": type(error).__name__ if error else None,
         "registry_sha256": route.registry_sha256,
         "contract_version": artifact.get("contract_version") if artifact else None,
+        "attempt_kind": attempt_kind,
+        "validation_errors": list(validation_errors),
+        "repair_validation_result": repair_validation_result,
         "runtime": {
             "returncode": execution.returncode,
             "timed_out": execution.timed_out,
@@ -713,6 +1018,38 @@ def _verify_observed_independence(
     if analyst.get("resolved_profile") == validator.get("resolved_profile"):
         raise RoleChainError("Validator executed under the producer profile")
     return True
+
+
+def _runtime_execution_error(label: str, execution: RuntimeExecution) -> RoleChainError | None:
+    if execution.returncode != 0:
+        detail = execution.stderr.strip() or f"exit {execution.returncode}"
+        return RoleChainError(f"{label} runtime failed: {detail}")
+    if execution.usage.get("completed") is False:
+        return RoleChainError(f"{label} runtime receipt is incomplete")
+    return None
+
+
+def _write_validation_errors(
+    path: Path,
+    *,
+    attempt: str,
+    errors: tuple[str, ...],
+    response: str,
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "attempt": attempt,
+                "errors": list(errors),
+                "response_sha256": hashlib.sha256(response.encode("utf-8")).hexdigest(),
+            },
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def _findings_from_artifact(
@@ -799,6 +1136,18 @@ def _benchmark(
     all_tool_calls_known = bool(receipts) and all(
         isinstance(value, int) for value in tool_call_values
     )
+    validator_initial = next(
+        (
+            item
+            for item in role_receipts
+            if item["agent"] == "Validator" and item["attempt_kind"] == "initial"
+        ),
+        None,
+    )
+    validator_repair = next(
+        (item for item in role_receipts if item["attempt_kind"] == "repair"),
+        None,
+    )
     control_gate = "TEST"
     status = "GO" if orchestration_verified and blocked_reason is None else "BLOCKED"
     return {
@@ -820,6 +1169,21 @@ def _benchmark(
         "cost": dict(cost),
         "validator_independence_verified": independence_verified,
         "orchestration_verified": orchestration_verified,
+        "validator_repair": {
+            "used": validator_repair is not None,
+            "initial_validation_errors": (
+                validator_initial["validation_errors"] if validator_initial else []
+            ),
+            "repair_validation_result": (
+                validator_repair["repair_validation_result"] if validator_repair else "NOT_USED"
+            ),
+            "initial_latency_ms": (
+                validator_initial["duration_ms"] if validator_initial else "UNKNOWN"
+            ),
+            "repair_latency_ms": (
+                validator_repair["duration_ms"] if validator_repair else "UNKNOWN"
+            ),
+        },
         "routing": {
             role: {
                 "requested_profile": route.requested_profile,
@@ -874,6 +1238,21 @@ def _benchmark(
             "directory": str(artifact_directory),
             "validated_role_outputs": {
                 role: str(artifact_directory / f"{role}.output.json") for role in artifacts
+            },
+            "validator_attempt_artifacts": {
+                name: str(path)
+                for name, path in {
+                    "initial_raw": artifact_directory / "validator.initial.raw.txt",
+                    "initial_errors": (
+                        artifact_directory / "validator.initial.validation-errors.json"
+                    ),
+                    "repair_input": artifact_directory / "validator.repair.input.json",
+                    "repair_raw": artifact_directory / "validator.repair.raw.txt",
+                    "repair_errors": (
+                        artifact_directory / "validator.repair.validation-errors.json"
+                    ),
+                }.items()
+                if path.is_file()
             },
         },
     }

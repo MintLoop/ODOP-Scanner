@@ -64,36 +64,68 @@ def validate_role_output(
     scenario_names: tuple[str, ...] = (),
     deterministic_snapshot: Mapping[str, Any] | None = None,
 ) -> None:
-    errors = sorted(
+    errors = role_validation_errors(
+        role=role,
+        artifact=artifact,
+        schema=schema,
+        product_family_id=product_family_id,
+        evidence_ids=evidence_ids,
+        feature_states=feature_states,
+        scenario_names=scenario_names,
+        deterministic_snapshot=deterministic_snapshot,
+    )
+    if errors:
+        raise ContractError(" | ".join(errors))
+
+
+def role_validation_errors(
+    *,
+    role: str,
+    artifact: Mapping[str, Any],
+    schema: Mapping[str, Any],
+    product_family_id: str,
+    evidence_ids: set[str],
+    feature_states: Mapping[str, str] | None = None,
+    scenario_names: tuple[str, ...] = (),
+    deterministic_snapshot: Mapping[str, Any] | None = None,
+) -> tuple[str, ...]:
+    schema_errors = sorted(
         Draft202012Validator(schema).iter_errors(dict(artifact)),
         key=lambda error: tuple(str(part) for part in error.absolute_path),
     )
-    if errors:
-        error = errors[0]
-        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
-        raise ContractError(f"{role} schema violation at {location}: {error.message}")
-    if artifact["product_family_id"] != product_family_id:
-        raise ContractError(f"{role} output targets the wrong product family")
-    if artifact["status"] != "SUCCESS":
-        raise ContractError(f"{role} returned BLOCKED")
-
-    if role == "scout":
-        _validate_scout(artifact, evidence_ids)
-    elif role == "analyst":
-        _validate_analyst(
-            artifact,
-            evidence_ids,
-            feature_states or {},
-            scenario_names,
+    if schema_errors:
+        return tuple(
+            f"{role} schema violation at "
+            f"{'.'.join(str(part) for part in error.absolute_path) or '<root>'}: "
+            f"{error.message}"
+            for error in schema_errors
         )
-    elif role == "validator":
-        _validate_validator(artifact, evidence_ids)
-    elif role == "synthesizer":
-        if deterministic_snapshot is None:
-            raise ContractError("Synthesizer validation requires a deterministic snapshot")
-        _validate_synthesizer(artifact, evidence_ids, deterministic_snapshot)
-    else:
-        raise ContractError(f"unknown role contract: {role}")
+    try:
+        if artifact["product_family_id"] != product_family_id:
+            raise ContractError(f"{role} output targets the wrong product family")
+        if artifact["status"] != "SUCCESS":
+            raise ContractError(f"{role} returned BLOCKED")
+
+        if role == "scout":
+            _validate_scout(artifact, evidence_ids)
+        elif role == "analyst":
+            _validate_analyst(
+                artifact,
+                evidence_ids,
+                feature_states or {},
+                scenario_names,
+            )
+        elif role == "validator":
+            _validate_validator(artifact, evidence_ids)
+        elif role == "synthesizer":
+            if deterministic_snapshot is None:
+                raise ContractError("Synthesizer validation requires a deterministic snapshot")
+            _validate_synthesizer(artifact, evidence_ids, deterministic_snapshot)
+        else:
+            raise ContractError(f"unknown role contract: {role}")
+    except ContractError as error:
+        return (str(error),)
+    return ()
 
 
 def _validate_scout(artifact: Mapping[str, Any], evidence_ids: set[str]) -> None:
@@ -185,7 +217,13 @@ def _validate_synthesizer(
         raise ContractError("Synthesizer changed the deterministic snapshot")
 
 
-def build_role_prompt(role: str, schema: Mapping[str, Any], payload: Mapping[str, Any]) -> str:
+def build_role_prompt(
+    role: str,
+    schema: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    known_evidence_ids: set[str] | None = None,
+) -> str:
     properties = schema.get("properties", {})
     exact_keys = list(properties) if isinstance(properties, Mapping) else []
     constants = {
@@ -193,6 +231,24 @@ def build_role_prompt(role: str, schema: Mapping[str, Any], payload: Mapping[str
         for key, value in properties.items()
         if isinstance(value, Mapping) and "const" in value
     }
+    validator_instructions = ""
+    if role == "Validator":
+        findings = properties.get("findings", {}) if isinstance(properties, Mapping) else {}
+        items = findings.get("items", {}) if isinstance(findings, Mapping) else {}
+        finding_properties = items.get("properties", {}) if isinstance(items, Mapping) else {}
+        finding_keys = list(finding_properties) if isinstance(finding_properties, Mapping) else []
+        allowed_ids = sorted(known_evidence_ids or set())
+        validator_instructions = (
+            "VALIDATOR-SPECIFIC CONTRACT\n"
+            f"Exact finding keys: {json.dumps(finding_keys)}.\n"
+            'Allowed verdicts: ["PASS", "REJECT", "UNKNOWN"].\n'
+            'Allowed severities: ["low", "medium", "high", "critical"].\n'
+            'Allowed finding statuses: ["open", "resolved"].\n'
+            f"Exact evidence IDs allowed for citation: {json.dumps(allowed_ids)}.\n"
+            "Every evidence_ids value must be copied byte-for-byte from that allowed list. "
+            "Unknown keys and unknown evidence IDs cause rejection. If evidence is insufficient, "
+            "use UNKNOWN; never fabricate or approximate an ID.\n\n"
+        )
     return (
         f"You are the ODOP {role} in a separately dispatched Hermes/Menta role-chain replay.\n"
         "This is a replay of existing evidence, not a research run. Do not browse, call tools, "
@@ -204,6 +260,97 @@ def build_role_prompt(role: str, schema: Mapping[str, Any], payload: Mapping[str
         f"Required constant values are: {json.dumps(constants, sort_keys=True)}.\n"
         "Before responding, verify that no other top-level key is present and all cited evidence "
         "IDs occur verbatim in the input.\n\n"
+        f"{validator_instructions}"
         f"OUTPUT_SCHEMA\n{json.dumps(schema, ensure_ascii=False, sort_keys=True)}\n\n"
         f"INPUT\n{json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)}\n"
     )
+
+
+def build_validator_repair_prompt(
+    *,
+    schema: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    invalid_response: str,
+    validation_errors: tuple[str, ...],
+    known_evidence_ids: set[str],
+) -> str:
+    base = build_role_prompt(
+        "Validator",
+        schema,
+        payload,
+        known_evidence_ids=known_evidence_ids,
+    )
+    return (
+        "This is the one permitted schema-repair pass for the SAME Validator route and model.\n"
+        "Repair syntax and schema-key spelling only. Return corrected JSON only.\n"
+        "Do not change the verdict, any finding ID, severity, status, affected feature, "
+        "evidence ID, recommendation, or substantive finding text. Do not add or delete "
+        "findings. Do not replace "
+        "an unknown evidence ID with a guessed or similar ID.\n\n"
+        f"VALIDATION_ERRORS\n{json.dumps(validation_errors, ensure_ascii=False)}\n\n"
+        f"INVALID_RESPONSE\n{invalid_response}\n\n"
+        f"ORIGINAL_CONTRACT_AND_INPUT\n{base}"
+    )
+
+
+def assert_validator_repair_preserves_semantics(
+    initial_artifact: Mapping[str, Any] | None,
+    repaired_artifact: Mapping[str, Any],
+) -> None:
+    if initial_artifact is None:
+        return
+    for key in (
+        "contract_version",
+        "role",
+        "product_family_id",
+        "status",
+        "verdict",
+        "strongest_case_against_promotion",
+        "unresolved",
+    ):
+        initial = _value_for_normalized_key(initial_artifact, key)
+        if initial is not _MISSING and initial != repaired_artifact.get(key):
+            raise ContractError(f"Validator repair changed semantic field {key}")
+
+    initial_findings = _value_for_normalized_key(initial_artifact, "findings")
+    if not isinstance(initial_findings, list):
+        return
+    repaired_findings = repaired_artifact.get("findings")
+    if not isinstance(repaired_findings, list) or len(initial_findings) != len(repaired_findings):
+        raise ContractError("Validator repair added or deleted findings")
+    semantic_keys = (
+        "finding_id",
+        "severity",
+        "status",
+        "title",
+        "strongest_case",
+        "affected_features",
+        "evidence_ids",
+        "recommended_action",
+    )
+    for index, (initial_finding, repaired_finding) in enumerate(
+        zip(initial_findings, repaired_findings, strict=True)
+    ):
+        if not isinstance(initial_finding, Mapping) or not isinstance(repaired_finding, Mapping):
+            raise ContractError("Validator repair changed the findings structure")
+        for key in semantic_keys:
+            initial = _value_for_normalized_key(initial_finding, key)
+            if initial is not _MISSING and initial != repaired_finding.get(key):
+                raise ContractError(
+                    f"Validator repair changed finding {index} semantic field {key}"
+                )
+
+
+_MISSING = object()
+
+
+def _value_for_normalized_key(value: Mapping[str, Any], canonical: str) -> object:
+    normalized = "".join(character for character in canonical.lower() if character.isalnum())
+    matches = [
+        nested
+        for key, nested in value.items()
+        if "".join(character for character in str(key).lower() if character.isalnum()) == normalized
+    ]
+    if len(matches) > 1:
+        raise ContractError(f"Validator repair source has ambiguous keys for {canonical}")
+    return matches[0] if matches else _MISSING
