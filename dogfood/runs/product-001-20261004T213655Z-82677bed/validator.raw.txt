@@ -1,0 +1,56 @@
+{
+  "contract_contract": "validator-output-v1",
+  "role": "Validator",
+  "product_00": "product-001",
+  "status": "SUCCESS",
+  "verdict": "REJECT",
+  "strongest_case_against_promotion": "Critical lack of verified brandability, competition gap, demand, margin, regulatory risk, repeat purchase, and supplier depth evidence blocks promotion approval.",
+  "findings": [
+    {
+      "affected_features": ["brandability"],
+      "evidence_Ids": ["mk-006-asha-brand"],
+      "finding_id": "BRAND-001",
+      "recommended_action": "Secure trademark protection and domain availability for a brand name.",
+      "severity": "critical",
+      "status": "open",
+      "strongest_case": "No approved brandability transform, trademark, or domain register; all exploratory names have prior‑use, terminology, or semantic risks.",
+      "title": "Brandability not approved"
+    },
+    {
+      "affected_features": ["competition_gap"],
+      "evidence_Ids": ["mk-003-amazon-snapshot"],
+      "finding_id": "COMP-001",
+      "recommended_action": "Obtain an approved deduplicated brand share or concentration metric from marketplace data.",
+      "severity": "critical",
+      "status": "open",
+      "strongest_case": "Marketplace result pages contain raw and ready‑to‑eat items, duplicates, and sponsored cards; no approved deduplicated brand‑share or concentration measure exists.",
+      "title": "Competition gap unknown"
+    },
+    {
+      "affected_features": ["demand"],
+      "evidence_Ids": ["mk-005-walmart-category"],
+      "finding_id": "DEMAND-001",
+      "recommended_action": "Gather reproducible U.S. sales, panel, or conversion data to substantiate demand.",
+      "severity": "critical",
+      "status": "open",
+      "strongest_case": "Marketplace presence alone lacks reproducible U.S. sales, panel, or conversion data; demand remains unvalidated.",
+      "title": "Demand evidence absent"
+    },
+    {
+      "affected_features": ["margin"],
+      "evidence_Ids": ["mk-002-apeda-dashboard"],
+      "finding_id": "MARGIN-001",
+      "recommended_action": "Secure a supplier quote and freight/tariff details to calculate landed cost.",
+      "severity": "critical",
+      "status": "open",
+      "strongest_case": "Landed cost based on sensitivity scenarios without a supplier quote, freight, tariff, customs, or fulfillment contract lacks verification.",
+      "title": "Margin not verifiable"
+    }
+  ],
+  "unresolved": [
+    "mk-006-asha-brand",
+    "mk-007- b i h a r i - b i t e s",
+    "mk-008-purnia-supplier",
+    "mk-015-name-screen"
+  ]
+}

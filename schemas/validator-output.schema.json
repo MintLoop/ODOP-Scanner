@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mintloop.local/odop/validator-output.schema.json",
+  "title": "ODOP Validator output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "product_family_id",
+    "status",
+    "verdict",
+    "strongest_case_against_promotion",
+    "findings",
+    "unresolved"
+  ],
+  "properties": {
+    "contract_version": {"const": "validator-output-v1"},
+    "role": {"const": "Validator"},
+    "product_family_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SUCCESS", "BLOCKED"]},
+    "verdict": {"enum": ["PASS", "REJECT", "UNKNOWN"]},
+    "strongest_case_against_promotion": {"type": "string", "minLength": 1},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_id",
+          "severity",
+          "status",
+          "title",
+          "strongest_case",
+          "affected_features",
+          "evidence_ids",
+          "recommended_action"
+        ],
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1},
+          "severity": {"enum": ["low", "medium", "high", "critical"]},
+          "status": {"enum": ["open", "resolved"]},
+          "title": {"type": "string", "minLength": 1},
+          "strongest_case": {"type": "string", "minLength": 1},
+          "affected_features": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "demand",
+                "competition_gap",
+                "margin",
+                "search_velocity",
+                "social_velocity",
+                "supplier_depth",
+                "shelf_stability",
+                "shipping",
+                "brandability",
+                "repeat_purchase",
+                "regulatory_risk"
+              ]
+            }
+          },
+          "evidence_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "recommended_action": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

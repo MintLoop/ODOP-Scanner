@@ -297,3 +297,82 @@ Therefore:
 - independent per-role model routing: NOT VERIFIED
 - Validator model independence: NOT VERIFIED
 - Menta role-chain benchmark: BLOCKED
+
+## 2026-10-04 — Executable Hermes/Menta role-chain bridge
+
+Status: implementation complete; operational benchmark `BLOCKED` by Validator contract failure.
+
+### CONTROL / HARNESS / REPRODUCIBILITY
+
+- **CONTROL:** the existing Codex external/monolithic research run remains the source of the v1
+  evidence and Validator packets. Its deterministic result is unscored, 0% coverage, Validator
+  `REJECT`, gate `TEST`, and maximum spend $150. Its runtime, models, tokens, and cost are `UNKNOWN`.
+- **HARNESS:** ODOP now resolves Menta profiles and dispatches separate Hermes processes for Scout,
+  Market Analyst, Validator, and Synthesizer. ODOP owns contracts, evidence, scoring, gates, and
+  persistence. Hermes owns execution and native usage telemetry.
+- **REPRODUCIBILITY:** the latest harness attempt used the unchanged v1 packet SHA-256
+  `287bb982e92b27295150414d7b2e582ff2b7f9487fc797cbf105f28e6185b9c6`. The score snapshot remained
+  `58aae5d307fd5adef2dcc862f05c471b02a1fee2d073b50130a193719c2ee282`: unscored, 0% coverage,
+  zero populated metrics, eleven NULL metrics. No new evidence was collected or accepted.
+
+### Registration and routing
+
+- Hermes project `odop-scanner` resolves to project ID `p_63123bd8` and this workspace.
+- Desired Menta registration added at
+  `/Users/ben/Desktop/Mintloop/Infra/Hermes-Menta/registry/project-profiles/odop-scanner.yaml` and
+  `registry/dogfood-projects.tsv`; the matching live profile is
+  `/Users/ben/.hermes/project-profiles/odop-scanner.yaml`.
+- Scout resolved through `research.analyst` to requested route
+  `ollama-heavy/gpt-oss:120b`.
+- Market Analyst resolved through `biz.strategy-finance` to requested route
+  `ollama-core/granite4.2:30b`.
+- Validator resolved through `assure.evidence`'s challenger slot to requested route
+  `ollama-core/nemotron3:33b`, distinct from the producing Analyst profile and model.
+- Synthesizer resolved through `product.strategy-ux` to requested route
+  `ollama-core/ornith-1.5:35b`, but was not dispatched after Validator failed.
+
+Hermes's native receipts normalized the three executed provider aliases to `custom`. The observed
+models still distinguished all three executions. Service class, tool-call count, and cost were not
+exposed as known values and remain `UNKNOWN`.
+
+### Final clean benchmark attempt
+
+Artifact: `dogfood/runs/product-001-20261004T213655Z-82677bed/benchmark.json`
+
+| Role | Profile | Observed provider/model | Duration | Input/output tokens | Artifact status |
+|---|---|---|---:|---:|---|
+| Scout | `research.analyst` | `custom/gpt-oss:120b` | 70.529 s | 9,888 / 1,372 | validated |
+| Market Analyst | `biz.strategy-finance` | `custom/granite4.2:30b` | 302.624 s | 12,148 / 2,136 | validated |
+| Validator | `assure.evidence` | `custom/nemotron3:33b` | 402.529 s | 13,946 / 17,793 | rejected |
+| Synthesizer | `product.strategy-ux` | UNKNOWN | UNKNOWN | UNKNOWN | not dispatched |
+
+- Total wall-clock runtime: 776.822 seconds.
+- Model calls: 3; tool calls: `UNKNOWN`; total cost: `UNKNOWN`.
+- Packet accepted evidence count: 12; Scout accepted evidence count: 12.
+- Deterministic metrics populated: 0; deterministic metrics NULL: 11.
+- Validator outcome: no accepted verdict; the raw response said `REJECT` but failed schema validation.
+- Final routed gate: not emitted. The existing deterministic control remains `TEST`.
+- Validator independence: requested and observed model separation exists, but harness verification is
+  `false` because the Validator role did not produce a valid artifact.
+- Orchestration verification: `false` because the four-role chain did not complete.
+
+The first real attempt stopped when Market Analyst reached its 900-second timeout. A compacted,
+minimal-reasoning handoff then allowed Market Analyst to complete. The next two clean attempts both
+failed closed on malformed Validator output; the final response contained misspelled extra top-level
+keys and invalid evidence-key spellings. The bridge did not repair, reinterpret, or persist the raw
+response as a valid Validator artifact.
+
+### Current verification state
+
+- deterministic reproducibility: VERIFIED
+- evidence persistence: VERIFIED
+- score reproducibility: VERIFIED
+- separate Hermes role dispatch through resolved Menta profiles: VERIFIED for Scout, Analyst, and
+  Validator attempts
+- valid Validator artifact: BLOCKED
+- Validator independence accepted by the completed chain: NOT VERIFIED
+- Synthesizer dispatch: BLOCKED behind Validator
+- end-to-end Menta role-chain benchmark: BLOCKED
+
+Validation: Ruff formatting/lint, strict mypy, and 37 pytest tests pass. No research, outreach,
+purchase, publication, launch, or push was performed.

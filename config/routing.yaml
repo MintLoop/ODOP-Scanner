@@ -1,0 +1,40 @@
+version: odop-routing-v1
+
+project:
+  slug: odop-scanner
+  workspace: .
+  live_profile: ~/.hermes/project-profiles/odop-scanner.yaml
+
+menta:
+  live_registry: ~/.hermes/agent-profiles/registry.yaml
+  desired_registry: ~/Desktop/Mintloop/Infra/Hermes-Menta/registry/agent-profiles/registry.yaml
+
+runtime:
+  command: hermes
+  timeout_seconds: 900
+  toolsets: [todo]
+  reasoning: minimal
+  ignore_workspace_rules: true
+
+roles:
+  scout:
+    label: Scout
+    requested_profile: research.analyst
+    model_slot: preferred_model
+    schema: schemas/scout-output.schema.json
+  analyst:
+    label: Market Analyst
+    requested_profile: biz.strategy-finance
+    model_slot: preferred_model
+    schema: schemas/analyst-output.schema.json
+  validator:
+    label: Validator
+    requested_profile: assure.evidence
+    model_slot: challenger_model
+    schema: schemas/validator-output.schema.json
+    independence_from: analyst
+  synthesizer:
+    label: Synthesizer
+    requested_profile: product.strategy-ux
+    model_slot: preferred_model
+    schema: schemas/synthesizer-output.schema.json

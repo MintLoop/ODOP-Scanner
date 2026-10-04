@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mintloop.local/odop/scout-output.schema.json",
+  "title": "ODOP Scout output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "product_family_id",
+    "status",
+    "summary",
+    "evidence_assessment",
+    "accepted_evidence_ids",
+    "rejected_evidence_ids",
+    "unverified_evidence_ids",
+    "missing_evidence",
+    "unresolved_factual_gaps"
+  ],
+  "properties": {
+    "contract_version": {"const": "scout-output-v1"},
+    "role": {"const": "Scout"},
+    "product_family_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SUCCESS", "BLOCKED"]},
+    "summary": {"type": "string", "minLength": 1},
+    "evidence_assessment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "disposition", "rationale"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1},
+          "disposition": {"enum": ["ACCEPTED", "REJECTED", "UNVERIFIED"]},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "accepted_evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "rejected_evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "unverified_evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "missing_evidence": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "unresolved_factual_gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

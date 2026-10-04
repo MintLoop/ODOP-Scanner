@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mintloop.local/odop/analyst-output.schema.json",
+  "title": "ODOP Market Analyst output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "product_family_id",
+    "status",
+    "summary",
+    "metric_mapping",
+    "assumptions",
+    "economics_interpretation",
+    "unresolved"
+  ],
+  "properties": {
+    "contract_version": {"const": "analyst-output-v1"},
+    "role": {"const": "Market Analyst"},
+    "product_family_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SUCCESS", "BLOCKED"]},
+    "summary": {"type": "string", "minLength": 1},
+    "metric_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "demand",
+        "competition_gap",
+        "margin",
+        "search_velocity",
+        "social_velocity",
+        "supplier_depth",
+        "shelf_stability",
+        "shipping",
+        "brandability",
+        "repeat_purchase",
+        "regulatory_risk"
+      ],
+      "properties": {
+        "demand": {"$ref": "#/$defs/metric"},
+        "competition_gap": {"$ref": "#/$defs/metric"},
+        "margin": {"$ref": "#/$defs/metric"},
+        "search_velocity": {"$ref": "#/$defs/metric"},
+        "social_velocity": {"$ref": "#/$defs/metric"},
+        "supplier_depth": {"$ref": "#/$defs/metric"},
+        "shelf_stability": {"$ref": "#/$defs/metric"},
+        "shipping": {"$ref": "#/$defs/metric"},
+        "brandability": {"$ref": "#/$defs/metric"},
+        "repeat_purchase": {"$ref": "#/$defs/metric"},
+        "regulatory_risk": {"$ref": "#/$defs/metric"}
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "economics_interpretation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_names", "interpretation", "limitations"],
+      "properties": {
+        "scenario_names": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "interpretation": {"type": "string", "minLength": 1},
+        "limitations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_ids", "interpretation", "missing_reason"],
+      "properties": {
+        "state": {"enum": ["POPULATED", "MISSING"]},
+        "evidence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "interpretation": {"type": "string", "minLength": 1},
+        "missing_reason": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

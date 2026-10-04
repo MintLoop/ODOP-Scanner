@@ -26,6 +26,11 @@ official PDF, text, CSV, or JSON
   -> JSON CLI/report output and processing-run receipts
 ```
 
+An optional replay harness dispatches Scout → Market Analyst → Validator → Synthesizer as separate
+Hermes one-shot processes. Menta's live profile registry resolves each requested profile and model
+slot; ODOP validates every handoff and remains the sole owner of evidence state, numerical scoring,
+gates, persistence, and card generation. A failed role or contract stops the chain.
+
 Market evidence is imported through a reviewed manual packet in this slice. Autonomous scraping,
 supplier outreach, purchases, publication, and launch actions remain out of scope.
 
@@ -142,6 +147,45 @@ coverage, confidence, and a Validator `PASS`; a bounded experiment under the con
 produce `TEST`; otherwise the result is `WATCH`. The rule engine—not the narrative agent—selects the
 gate.
 
+### Hermes/Menta role-chain replay
+
+The replay command uses the existing evidence packet and does not perform new market research:
+
+```bash
+.venv/bin/python -m odop_scanner \
+  --db data/odop.duckdb \
+  role-chain-replay product-001 \
+  --evidence evidence/makhana/makhana.evidence.v1.json
+```
+
+Routing is declared in [`config/routing.yaml`](config/routing.yaml), and role outputs must validate
+against the four schemas in [`schemas/`](schemas/). The live ODOP Menta project profile must resolve
+before dispatch. Each role receives a distinct process, input artifact, raw response, usage receipt,
+and validated output. Provider/model fields come from Hermes's usage file; unavailable service,
+tool-call, and cost fields remain `UNKNOWN`.
+
+The 2026-10-04 operational benchmark is intentionally `BLOCKED`. The final clean attempt completed
+Scout and Market Analyst on distinct resolved routes, then the independent Validator model returned
+JSON with misspelled extra fields. Strict validation rejected the artifact, no Validator verdict or
+decision record was accepted, and Synthesizer was not dispatched. The deterministic input state did
+not change: Product #001 remains unscored with 0% evidence coverage and 11 NULL metrics; the existing
+control decision remains `TEST`. The failed run and native telemetry are preserved under
+[`dogfood/runs/product-001-20261004T213655Z-82677bed/`](dogfood/runs/product-001-20261004T213655Z-82677bed/).
+
+| Role | Requested profile | Observed model | Duration | Tokens in/out | Cost | Status |
+|---|---|---|---:|---:|---:|---|
+| Scout | `research.analyst` | `custom/gpt-oss:120b` | 70.529 s | 9,888 / 1,372 | UNKNOWN | succeeded |
+| Market Analyst | `biz.strategy-finance` | `custom/granite4.2:30b` | 302.624 s | 12,148 / 2,136 | UNKNOWN | succeeded |
+| Validator | `assure.evidence` | `custom/nemotron3:33b` | 402.529 s | 13,946 / 17,793 | UNKNOWN | failed contract |
+| Synthesizer | `product.strategy-ux` | UNKNOWN (not dispatched) | UNKNOWN | UNKNOWN | UNKNOWN | not run |
+
+Overall wall time was 776.822 seconds across three exposed model calls. Tool-call count and total cost
+are `UNKNOWN`; Hermes reported no priced cost source. Twelve evidence items retained their accepted
+state, zero deterministic metrics were populated, and eleven remained NULL. Route-level model
+separation between Analyst and Validator is visible in native receipts, but the harness does not mark
+Validator independence or orchestration verified because the Validator artifact never passed its
+contract.
+
 By default, the DuckDB database is `data/odop.duckdb` and immutable source snapshots are placed under
 `data/raw/`. Both are intentionally ignored by Git. Re-running ingestion is idempotent for identical
 source bytes because source and row IDs are content-derived.
@@ -206,7 +250,9 @@ design and phase boundaries are in
 Tests cover ingestion, malformed rows, aliases, ambiguous normalization, duplicate districts,
 deterministic scoring, missing evidence, weighted coverage, config versioning, regulatory penalties,
 run receipts, source reconciliation statuses, append-only reviews, source-version isolation, and the
-Makhana Product #001 slice.
+Makhana Product #001 slice. Role-chain tests additionally cover profile resolution, stage handoffs,
+strict contracts, missing and invalid artifacts, route failures, Validator independence, telemetry
+UNKNOWN behavior, receipt persistence, and score immutability.
 
 ## Product #002 reusable capabilities
 

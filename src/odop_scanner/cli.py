@@ -11,6 +11,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from .agents import RoleChainRunner
 from .config import (
     load_decision_gates,
     load_reconciliation,
@@ -155,6 +156,15 @@ def _build_parser() -> argparse.ArgumentParser:
     card.add_argument("--output", type=Path, required=True)
     card.add_argument("--score-config", type=Path)
     card.add_argument("--gate-config", type=Path)
+
+    replay = subparsers.add_parser(
+        "role-chain-replay",
+        help="replay one evidence packet through separately dispatched Hermes/Menta roles",
+    )
+    replay.add_argument("product")
+    replay.add_argument("--evidence", type=Path, required=True)
+    replay.add_argument("--routing-config", type=Path)
+    replay.add_argument("--output-dir", type=Path)
 
     return parser
 
@@ -733,6 +743,16 @@ def _opportunity_card(args: argparse.Namespace) -> dict[str, Any]:
         connection.close()
 
 
+def _role_chain_replay(args: argparse.Namespace) -> dict[str, Any]:
+    return RoleChainRunner().run(
+        product=args.product,
+        evidence_path=args.evidence,
+        database_path=args.db,
+        routing_path=args.routing_config,
+        output_directory=args.output_dir,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -747,10 +767,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "score": _score,
         "report": _report,
         "opportunity-card": _opportunity_card,
+        "role-chain-replay": _role_chain_replay,
     }
     try:
-        _print(handlers[args.command](args))
-        return 0
+        output = handlers[args.command](args)
+        _print(output)
+        return 2 if isinstance(output, dict) and output.get("status") == "BLOCKED" else 0
     except Exception as error:
         _print({"status": "failed", "error_type": type(error).__name__, "error": str(error)})
         return 1

@@ -1,0 +1,96 @@
+{
+  "assumptions": [],
+  "contract_version": "analyst-output-v1",
+  "economics_interpretation": {
+    "interpretation": "Four 1 oz packs sold as one DTC order. Retail equals four times the observed Whole Foods one-ounce price. Costs deliberately stress freight, duty, import overhead, and fulfillment. No product-specific customs classification or fulfillment quote exists. Scenarios exclude CAC, storage, returns, spoilage, breakage, discounts, tax, overhead, and chargebacks.",
+    "limitations": [
+      "No product-specific customs classification or fulfillment quote exists.",
+      "Scenarios exclude CAC, storage, returns, spoilage, breakage, discounts, tax, overhead, and chargebacks.",
+      "All cost inputs are broad sensitivity assumptions, not actual quotes.",
+      "Duty, freight, factory, packaging, import overhead per unit, and fulfillment per order are illustrative ranges, not supplier-confirmed numbers."
+    ],
+    "scenario_names": [
+      "LOW (downside contribution)",
+      "BASE (working hypothesis)",
+      "HIGH (upside contribution)"
+    ]
+  },
+  "metric_mapping": {
+    "brandability": {
+      "evidence_ids": [],
+      "interpretation": "No approved brandability transform or trademark/domain clearance; all exploratory names have descriptive, prior-use, terminology, or semantic risks.",
+      "missing_reason": "No approved brandability transform or trademark/domain clearance; all three exploratory names have descriptive, prior-use, terminology, or semantic risks.",
+      "state": "MISSING"
+    },
+    "competition_gap": {
+      "evidence_ids": [],
+      "interpretation": "Marketplace result pages mix raw and ready-to-eat products, duplicates, and sponsored cards; no approved deduplicated brand-share or concentration transform exists.",
+      "missing_reason": "Marketplace result pages mix raw and ready-to-eat products, duplicates, and sponsored cards; no approved deduplicated brand-share or concentration transform exists.",
+      "state": "MISSING"
+    },
+    "demand": {
+      "evidence_ids": [],
+      "interpretation": "No reproducible U.S. sales, panel, conversion, or approved demand-proxy series; marketplace presence and mentions do not establish demand.",
+      "missing_reason": "No reproducible U.S. sales, panel, conversion, or approved demand-proxy series; marketplace presence and mentions do not establish demand.",
+      "state": "MISSING"
+    },
+    "margin": {
+      "evidence_ids": [],
+      "interpretation": "Sensitivity scenarios are not quotes; landed cost lacks a supplier quote, freight quote, product-specific tariff ruling, customs overhead, fulfillment contract, and measured breakage.",
+      "missing_reason": "Sensitivity scenarios are not quotes; landed cost lacks a supplier quote, freight quote, product-specific tariff ruling, customs overhead, fulfillment contract, and measured breakage.",
+      "state": "MISSING"
+    },
+    "regulatory_risk": {
+      "evidence_ids": [],
+      "interpretation": "General duties are identifiable, but exact formula, claims, facility status, FSVP importer, HTS classification, tariff stack, and APHIS treatment are unresolved.",
+      "missing_reason": "General duties are identifiable, but exact formula, claims, facility status, FSVP importer, HTS classification, tariff stack, and APHIS treatment are unresolved.",
+      "state": "MISSING"
+    },
+    "repeat_purchase": {
+      "evidence_ids": [],
+      "interpretation": "No cohort, reorder, household panel, or measured consumption-cadence evidence exists.",
+      "missing_reason": "No cohort, reorder, household panel, or measured consumption-cadence evidence exists.",
+      "state": "MISSING"
+    },
+    "search_velocity": {
+      "evidence_ids": [],
+      "interpretation": "No reproducible U.S. time series with provider version, date window, and request identity was captured.",
+      "missing_reason": "No reproducible U.S. time series with provider version, date window, and request identity was captured.",
+      "state": "MISSING"
+    },
+    "shelf_stability": {
+      "evidence_ids": [],
+      "interpretation": "No finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained.",
+      "missing_reason": "No finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained.",
+      "state": "MISSING"
+    },
+    "shipping": {
+      "evidence_ids": [],
+      "interpretation": "Physical research supports fragility and low density, but commercial package dimensions, zone rates, damage tests, and breakage allowances are absent.",
+      "missing_reason": "Physical research supports fragility and low density, but commercial package dimensions, zone rates, damage tests, and breakage allowances are absent.",
+      "state": "MISSING"
+    },
+    "social_velocity": {
+      "evidence_ids": [],
+      "interpretation": "Observed recipes, videos, and anecdotes lack a reproducible U.S. time series and cannot be converted from mention counts into demand.",
+      "missing_reason": "Observed recipes, videos, and anecdotes lack a reproducible U.S. time series and cannot be converted from mention counts into demand.",
+      "state": "MISSING"
+    },
+    "supplier_depth": {
+      "evidence_ids": [],
+      "interpretation": "Multiple suppliers claim capability, but no independent entity verification, quote, certificate, audit, COA, sample, or on-time performance evidence exists.",
+      "missing_reason": "Multiple suppliers claim capability, but no independent entity verification, quote, certificate, audit, COA, sample, or on-time performance evidence exists.",
+      "state": "MISSING"
+    }
+  },
+  "product_family_id": "product-001",
+  "role": "Market Analyst",
+  "status": "SUCCESS",
+  "summary": "Evidence review completed: 12 accepted observations/findings, 4 unverified observations/inferences, no rejected evidence, and no missing evidence.",
+  "unresolved": [
+    "mk-ev-006-asha-brand",
+    "mk-ev-007-bihari-bites",
+    "mk-ev-008-purnia-supplier",
+    "mk-ev-015-name-screen"
+  ]
+}

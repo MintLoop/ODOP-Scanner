@@ -14,7 +14,8 @@ try:
     from datetime import UTC
 except ImportError:
     from datetime import timezone
-    UTC = timezone.utc
+
+    UTC = timezone.utc  # noqa: UP017 -- Python 3.9 compatibility
 
 import duckdb
 
@@ -920,7 +921,16 @@ def store_agent_runs(
     for item in materialized:
         connection.execute(
             """
-            INSERT INTO agent_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO agent_runs (
+                run_id, family_id, agent, model, route, started_at, ended_at, duration_ms,
+                cost_amount, cost_currency, cost_state, output_artifact, status, created_at,
+                requested_profile, resolved_profile, provider, service_class, input_tokens,
+                output_tokens, token_state, input_sha256, output_sha256, evidence_refs_json,
+                error_class, registry_sha256, contract_version
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?
+            )
             ON CONFLICT (run_id) DO NOTHING
             """,
             [
@@ -938,9 +948,63 @@ def store_agent_runs(
                 item.get("output_artifact"),
                 str(item["status"]),
                 now,
+                item.get("requested_profile"),
+                item.get("resolved_profile"),
+                item.get("provider"),
+                item.get("service_class"),
+                item.get("input_tokens"),
+                item.get("output_tokens"),
+                str(item.get("token_state", "UNKNOWN")),
+                item.get("input_sha256"),
+                item.get("output_sha256"),
+                json.dumps(item.get("evidence_refs", [])),
+                item.get("error_class"),
+                item.get("registry_sha256"),
+                item.get("contract_version"),
             ],
         )
     return len(materialized)
+
+
+def store_role_chain_run(
+    connection: duckdb.DuckDBPyConnection,
+    record: Mapping[str, Any],
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO role_chain_runs VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ) ON CONFLICT (chain_run_id) DO NOTHING
+        """,
+        [
+            record["chain_run_id"],
+            record["family_id"],
+            record["evidence_packet_sha256"],
+            record["routing_config_sha256"],
+            record.get("registry_sha256"),
+            record["started_at"],
+            record["ended_at"],
+            record["duration_ms"],
+            record["run_status"],
+            record.get("blocked_reason"),
+            record["score_id"],
+            record.get("overall_score"),
+            record["evidence_coverage"],
+            record.get("validator_verdict"),
+            record.get("decision_gate"),
+            record["validator_independence_verified"],
+            record["orchestration_verified"],
+            record["accepted_evidence_count"],
+            record["populated_metric_count"],
+            record["null_metric_count"],
+            record.get("total_cost_amount"),
+            record.get("cost_currency"),
+            record["cost_state"],
+            record["artifact_directory"],
+            record["benchmark_artifact"],
+            datetime.now(UTC),
+        ],
+    )
 
 
 def product_record(connection: duckdb.DuckDBPyConnection, family_id: str) -> dict[str, Any]:

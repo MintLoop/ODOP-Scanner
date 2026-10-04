@@ -9,7 +9,9 @@ description = "Local-first ODOP product intelligence scanner for MintLoop"
 requires-python = ">=3.12,<3.15"
 dependencies = [
   "duckdb>=1.4,<2",
+  "jsonschema>=4.25,<5",
   "pytz>=2025.2",
+  "pyyaml>=6.0,<7",
   "pypdf>=6,<7",
 ]
 
@@ -21,6 +23,8 @@ dev = [
   "mypy>=1.19,<2",
   "pytest>=9,<10",
   "ruff>=0.14,<1",
+  "types-jsonschema>=4.25,<5",
+  "types-pyyaml>=6.0,<7",
 ]
 
 [tool.setuptools.packages.find]

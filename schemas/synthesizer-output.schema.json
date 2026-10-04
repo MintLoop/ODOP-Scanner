@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mintloop.local/odop/synthesizer-output.schema.json",
+  "title": "ODOP Synthesizer output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "product_family_id",
+    "status",
+    "executive_summary",
+    "sections",
+    "strongest_case_against",
+    "top_unknowns",
+    "top_risks",
+    "cheapest_next_experiment",
+    "deterministic_snapshot"
+  ],
+  "properties": {
+    "contract_version": {"const": "synthesizer-output-v1"},
+    "role": {"const": "Synthesizer"},
+    "product_family_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SUCCESS", "BLOCKED"]},
+    "executive_summary": {"$ref": "#/$defs/narrative"},
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "market",
+        "demand",
+        "competition",
+        "supply",
+        "economics",
+        "regulatory_friction",
+        "product",
+        "brandability",
+        "content_potential"
+      ],
+      "properties": {
+        "market": {"$ref": "#/$defs/narrative"},
+        "demand": {"$ref": "#/$defs/narrative"},
+        "competition": {"$ref": "#/$defs/narrative"},
+        "supply": {"$ref": "#/$defs/narrative"},
+        "economics": {"$ref": "#/$defs/narrative"},
+        "regulatory_friction": {"$ref": "#/$defs/narrative"},
+        "product": {"$ref": "#/$defs/narrative"},
+        "brandability": {"$ref": "#/$defs/narrative"},
+        "content_potential": {"$ref": "#/$defs/narrative"}
+      }
+    },
+    "strongest_case_against": {"$ref": "#/$defs/narrative"},
+    "top_unknowns": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "top_risks": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "cheapest_next_experiment": {"type": "string", "minLength": 1},
+    "deterministic_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score_id",
+        "overall_score",
+        "evidence_coverage",
+        "confidence_band",
+        "validator_outcome",
+        "decision_gate",
+        "max_recommended_spend_usd"
+      ],
+      "properties": {
+        "score_id": {"type": "string", "minLength": 1},
+        "overall_score": {"type": ["number", "null"]},
+        "evidence_coverage": {"type": "number", "minimum": 0, "maximum": 100},
+        "confidence_band": {"enum": ["none", "low", "medium", "high"]},
+        "validator_outcome": {"enum": ["PASS", "REJECT", "UNKNOWN"]},
+        "decision_gate": {"enum": ["BUILD", "TEST", "WATCH", "KILL"]},
+        "max_recommended_spend_usd": {"type": "number", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {
+    "narrative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "evidence_ids"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
