@@ -1,0 +1,11 @@
+version = "v0.1.0"
+description = "Provisional research-only promotion gates for the Product #001 vertical slice."
+research_only = true
+
+[build]
+min_overall_score = 60.0
+min_evidence_coverage = 80.0
+allowed_confidence_bands = ["high"]
+
+[test]
+max_spend_usd = 250.0

@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from .models import (
+    ConfidenceBand,
     CountChange,
+    DecisionGateConfig,
     DimensionConfig,
     FreshnessObservation,
     ReconciliationConfig,
@@ -227,4 +229,33 @@ def load_scoring(path: Path | None = None) -> ScoringConfig:
         dimensions=tuple(dimensions),
         medium_min_coverage=medium,
         high_min_coverage=high,
+    )
+
+
+def load_decision_gates(path: Path | None = None) -> DecisionGateConfig:
+    document, digest = _read_toml(path or config_path("decision_gates.v0.toml"))
+    version = str(document.get("version", "")).strip()
+    if not version:
+        raise ValueError("decision gate configuration requires a non-empty version")
+    build = document.get("build", {})
+    test = document.get("test", {})
+    bands = tuple(str(value) for value in build.get("allowed_confidence_bands", []))
+    valid_bands = {"none", "low", "medium", "high"}
+    if not bands or not set(bands).issubset(valid_bands):
+        raise ValueError("decision gate confidence bands are invalid")
+    min_score = float(build["min_overall_score"])
+    min_coverage = float(build["min_evidence_coverage"])
+    max_spend = float(test["max_spend_usd"])
+    if not 0 <= min_score <= 100 or not 0 <= min_coverage <= 100:
+        raise ValueError("decision gate score and coverage thresholds must be between 0 and 100")
+    if max_spend < 0:
+        raise ValueError("decision gate test spend cannot be negative")
+    return DecisionGateConfig(
+        version=version,
+        sha256=digest,
+        research_only=bool(document.get("research_only", True)),
+        build_min_overall_score=min_score,
+        build_min_evidence_coverage=min_coverage,
+        build_confidence_bands=cast(tuple[ConfidenceBand, ...], bands),
+        max_test_spend_usd=max_spend,
     )

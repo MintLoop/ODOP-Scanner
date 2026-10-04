@@ -1,0 +1,732 @@
+{
+  "version": "makhana-evidence-v1.0.0",
+  "product_family_id": "product-001",
+  "product_name": "Makhana / foxnut",
+  "retrieval_date": "2026-10-03",
+  "scope": {
+    "market": "United States ready-to-eat savory snack opportunity",
+    "product_form": "roasted or popped, seasoned, shelf-stable makhana sold in consumer packs",
+    "geography_of_origin": "Bihar, India",
+    "evidence_cutoff": "2026-10-03",
+    "exclusions": [
+      "raw cooking ingredients",
+      "medical or disease claims",
+      "bulk inventory commitments",
+      "legal, tariff, trademark, or customs clearance"
+    ]
+  },
+  "evidence": [
+    {
+      "evidence_id": "mk-ev-001-apeda-market-study",
+      "claim_class": "OBSERVATION",
+      "source_title": "APEDA Indian Makhana Market Study",
+      "source_url": "https://apeda.gov.in/sites/default/files/study_reports/Makhana_Report_English.pdf",
+      "source_type": "official_market_study",
+      "locator": "Production, value-chain, export, packaging, and terminology sections",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_document_review",
+      "acceptance_state": "accepted",
+      "notes": "The report's export-share estimate conflicts with a newer APEDA dashboard and is retained as a versioned claim, not merged.",
+      "payload": {
+        "terminology": "Gorgon nut is botanically accurate; fox nut and lotus seed are common but botanically misleading market names.",
+        "production": "India is described as producing about 90% of global output; Bihar is described as producing 85-90% of Indian output.",
+        "cluster": "The report identifies 21 Bihar districts, more than 50,000 households, and a fragmented processing sector.",
+        "supply_risks": [
+          "labor-intensive processing",
+          "inconsistent quality and packaging",
+          "consignment rejection risk",
+          "child-labor concern in traditional processing"
+        ],
+        "packaging": "Airtight moisture protection is emphasized; PET, tins, and layered films are described.",
+        "export_share_claim": "1-2% of output exported",
+        "gi": "Mithila Makhana GI registered 2022-08-16"
+      }
+    },
+    {
+      "evidence_id": "mk-ev-002-apeda-dashboard",
+      "claim_class": "OBSERVATION",
+      "source_title": "APEDA Makhana Monthly Dashboard",
+      "source_url": "https://apeda.gov.in/sites/default/files/2025-12/MIC_Monthly_dashboard_Makhana_15122025.pdf",
+      "source_type": "official_market_dashboard",
+      "locator": "2025 price, export-destination, and export-volume panels",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2025-12-15",
+      "collection_method": "manual_document_review",
+      "acceptance_state": "accepted",
+      "notes": "The dashboard's 40% export allocation conflicts materially with mk-ev-001. Different periods or methods may explain it; the conflict remains unresolved.",
+      "payload": {
+        "india_average_price_inr_per_kg_2020": 500,
+        "india_average_price_inr_per_kg_2025": 1250,
+        "us_share_of_india_exports_percent": 40,
+        "average_us_unit_value_usd_per_kg_2025": 19.5,
+        "forecast_export_price_usd_per_kg": "16-20",
+        "jan_oct_2025_export_volume_mt": 18150,
+        "export_allocation_claim_percent": 40
+      }
+    },
+    {
+      "evidence_id": "mk-ev-003-amazon-snapshot",
+      "claim_class": "OBSERVATION",
+      "source_title": "Amazon US search results for makhana",
+      "source_url": "https://www.amazon.com/s?k=makhana",
+      "source_type": "marketplace_search_snapshot",
+      "locator": "First results page, signed-out session localized to Miami 33166",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "in_app_browser_dom_extraction",
+      "acceptance_state": "accepted",
+      "notes": "The heading reported 1-48 of 100 results. Results mix raw and ready-to-eat products, sponsored duplicates, multipacks, and some implausibly parsed weights; 100 is not a ready-to-eat SKU count.",
+      "payload": {
+        "query": "makhana",
+        "result_heading": "1-48 of 100 results for makhana",
+        "ready_to_eat_comparable_rule": "available first-page ready-to-eat snack with parseable price and net weight; exclude raw ingredient, obvious duplicate, and implausible weight metadata",
+        "ready_to_eat_sample_price_per_oz_usd": [2.6, 2.92, 4.06, 4.06, 5.69, 5.69, 2.6, 2.88, 5.08],
+        "ready_to_eat_sample_review_counts": [20, 80, 75, 54, 141, 94, 13, 0, 3],
+        "sample_brands": [
+          "Farmley",
+          "eatThis",
+          "AshaPops",
+          "Rani",
+          "Karma"
+        ],
+        "observed_flavors": [
+          "salted",
+          "peri-peri",
+          "chili",
+          "turmeric-garlic",
+          "masala",
+          "variety packs"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-004-whole-foods-asha",
+      "claim_class": "OBSERVATION",
+      "source_title": "Whole Foods Market AshaPops turmeric garlic product page",
+      "source_url": "https://www.wholefoodsmarket.com/grocery/product/turmeric-garlic%20popped%20water%20lily%20seeds%2C%201%20oz-b07hwpykl3",
+      "source_type": "retailer_product_page",
+      "locator": "Product title, 1 oz package, indexed unit price",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "Confirms at least one makhana product listing at a major natural-grocery chain; it does not establish store count, velocity, or repeat purchase.",
+      "payload": {
+        "brand": "AshaPops",
+        "descriptor": "popped water lily seeds",
+        "net_weight_oz": 1,
+        "indexed_price_per_oz_usd": 4.94
+      }
+    },
+    {
+      "evidence_id": "mk-ev-005-walmart-category",
+      "claim_class": "OBSERVATION",
+      "source_title": "Walmart US phool makhana search page",
+      "source_url": "https://www.walmart.com/c/kp/phool-makhana",
+      "source_type": "retailer_search_snapshot",
+      "locator": "Search result heading and ready-to-eat listing cards",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "The 30-result page mixes raw and ready-to-eat items and cannot support a category SKU count without deduplication.",
+      "payload": {
+        "observed_result_count": 30,
+        "scope_warning": "mixed raw, ready-to-eat, marketplace, and possible duplicate offers",
+        "observed_ready_to_eat_examples": [
+          "Peppy Pops 6 x 2 oz at $31.99",
+          "Farmley 2.72 oz at $12.99",
+          "Rani 2.6 oz at $11.99"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-006-asha-brand",
+      "claim_class": "OBSERVATION",
+      "source_title": "AshaPops brand site",
+      "source_url": "https://ashapops.com/",
+      "source_type": "brand_site",
+      "locator": "Catalog, positioning, flavor, and retailer-claim sections",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "unverified",
+      "notes": "Catalog and positioning are direct brand observations; review totals and claimed retail distribution remain seller claims unless independently corroborated.",
+      "payload": {
+        "flavor_count_observed": 4,
+        "positioning": "light popped snack / popcorn alternative",
+        "claimed_review_count": "1200+",
+        "claimed_retailers": [
+          "Whole Foods",
+          "Natural Grocers",
+          "Erewhon"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-007-bihari-bites",
+      "claim_class": "OBSERVATION",
+      "source_title": "Bihari Bites bulk and private-label makhana pages",
+      "source_url": "https://biharibites.com/",
+      "source_type": "supplier_site",
+      "locator": "MOQ, capacity, product grade, price, export, and private-label claims",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "unverified",
+      "notes": "All commercial and certification information is a supplier claim; no quote, facility audit, certificate, COA, or sample was obtained.",
+      "payload": {
+        "claimed_moq_kg": 25,
+        "claimed_capacity_mt_per_month": "50+",
+        "claimed_export_countries": "10+",
+        "claimed_prices_inr_per_kg": {
+          "raw_5_plus": 830,
+          "raw_6_plus": 1030,
+          "raw_hp6_plus": 1090,
+          "roasted": 990,
+          "flavored": 1030,
+          "private_label_or_nitrogen_increment": 40
+        }
+      }
+    },
+    {
+      "evidence_id": "mk-ev-008-purnia-supplier",
+      "claim_class": "OBSERVATION",
+      "source_title": "Purnia Makhana private-label and export pages",
+      "source_url": "https://purniamakhana.com/",
+      "source_type": "supplier_site",
+      "locator": "Product, packaging, MOQ, lead-time, and export-document claims",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "unverified",
+      "notes": "Claims are not supplier validation. Exact private-label MOQ, commercial quote, testing, and documents remain unknown.",
+      "payload": {
+        "claimed_raw_moq_kg": 50,
+        "claimed_roasted_or_flavored_moq_kg": 25,
+        "claimed_lead_time_weeks": "3-6",
+        "claimed_options": [
+          "custom pack size",
+          "custom material",
+          "nitrogen flush",
+          "custom flavor"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-009-food-fragility-study",
+      "claim_class": "VERIFIED_FINDING",
+      "source_title": "Peer-reviewed study of Euryale ferox roasting properties",
+      "source_url": "https://link.springer.com/article/10.1186/s43014-021-00081-x",
+      "source_type": "peer_reviewed_article",
+      "locator": "Mechanical and bulk-density results after roasting",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2021-01-01",
+      "collection_method": "manual_document_review",
+      "acceptance_state": "accepted",
+      "notes": "Supports a low-density, more fragile physical product. It does not measure commercial-package breakage in U.S. parcel delivery.",
+      "payload": {
+        "breaking_force_before_roasting_kgf": 6.12,
+        "breaking_force_after_roasting_kgf": 2.19,
+        "bulk_density_before_kg_m3": 100.3,
+        "bulk_density_after_kg_m3": 83.31
+      }
+    },
+    {
+      "evidence_id": "mk-ev-010-amazon-fees",
+      "claim_class": "OBSERVATION",
+      "source_title": "Amazon US selling plan and referral fee schedule",
+      "source_url": "https://sell.amazon.com/pricing",
+      "source_type": "platform_pricing",
+      "locator": "Grocery referral fee schedule",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "Referral fees are only one part of Amazon economics. FBA fulfillment, inbound placement, storage, returns, promotions, and ads can be additional.",
+      "payload": {
+        "grocery_referral_fee_percent_at_or_below_15_usd": 8,
+        "grocery_referral_fee_percent_above_15_usd": 15,
+        "amazon_single_pack_implication": "A low-priced one-ounce pack has little room after per-unit fulfillment and referral fees."
+      }
+    },
+    {
+      "evidence_id": "mk-ev-011-fda-importing-food",
+      "claim_class": "VERIFIED_FINDING",
+      "source_title": "FDA Importing Food Products into the United States",
+      "source_url": "https://www.fda.gov/food/food-imports-exports/importing-food-products-united-states",
+      "source_type": "official_regulatory_guidance",
+      "locator": "Import requirements overview",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "General regulatory overview, not a legal determination for a particular formulation, facility, or shipment.",
+      "payload": {
+        "requirements": [
+          "FDA food facility registration where applicable",
+          "prior notice for imported food",
+          "admissibility and applicable food-safety compliance",
+          "English-language compliant labeling"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-012-fsvp",
+      "claim_class": "VERIFIED_FINDING",
+      "source_title": "FDA Foreign Supplier Verification Programs final rule",
+      "source_url": "https://www.fda.gov/food/food-safety-modernization-act-fsma/fsma-final-rule-foreign-supplier-verification-programs-fsvp-importers-food-humans-and-animals",
+      "source_type": "official_regulatory_guidance",
+      "locator": "Importer definition and core program requirements",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "The responsible FSVP importer and exact verification activities depend on the transaction and hazards; professional review is required.",
+      "payload": {
+        "requirements": [
+          "written program for each food and foreign supplier as applicable",
+          "hazard analysis",
+          "supplier evaluation and verification",
+          "corrective actions and records"
+        ]
+      }
+    },
+    {
+      "evidence_id": "mk-ev-013-fda-labeling",
+      "claim_class": "VERIFIED_FINDING",
+      "source_title": "FDA Food Labeling Guide",
+      "source_url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-industry-food-labeling-guide",
+      "source_type": "official_regulatory_guidance",
+      "locator": "Identity, net quantity, ingredient, business, nutrition, allergen, and claims sections",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "General guide; exact label review is formula- and pack-specific.",
+      "payload": {
+        "baseline_considerations": [
+          "statement of identity",
+          "net quantity",
+          "ingredient list",
+          "name and address",
+          "Nutrition Facts unless a valid exemption applies",
+          "major-allergen declaration when introduced by seasoning or shared equipment",
+          "truthful, substantiated claims"
+        ],
+        "product_note": "Makhana itself is not one of the nine U.S. major allergens; flavor systems can add major allergens."
+      }
+    },
+    {
+      "evidence_id": "mk-ev-014-lotus-eaters-use",
+      "claim_class": "OBSERVATION",
+      "source_title": "Lotus Eaters existing media business",
+      "source_url": "https://lotuseaters.com/",
+      "source_type": "commercial_use_check",
+      "locator": "Home page and commercial identity",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "This is an obvious-use screen, not trademark clearance. The name also carries a mythological association with indolence and forgetfulness.",
+      "payload": {
+        "name": "Lotus Eaters",
+        "existing_field": "politics and media",
+        "screening_result": "high naming risk; do not advance without counsel"
+      }
+    },
+    {
+      "evidence_id": "mk-ev-015-name-screen",
+      "claim_class": "INFERENCE",
+      "source_title": "Exploratory makhana name screen",
+      "source_url": "https://tmsearch.uspto.gov/",
+      "source_type": "preliminary_name_screen",
+      "locator": "Obvious-use review for FoxNut Labs, Popped Lotus, and Lotus Eaters",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_search_and_interpretation",
+      "acceptance_state": "unverified",
+      "notes": "No comprehensive knockout search, domain ownership verification, common-law search, class analysis, or legal opinion was performed.",
+      "payload": {
+        "FoxNut Labs": "No exact commercial use surfaced in the limited screen; fox nut is descriptive and the domain was not verified.",
+        "Popped Lotus": "Descriptor has prior snack use and is botanically inaccurate for makhana.",
+        "Lotus Eaters": "Existing commercial use and undesirable semantic association make it the riskiest candidate.",
+        "decision": "No permanent brand selected."
+      }
+    },
+    {
+      "evidence_id": "mk-ev-016-amazon-fba-fees",
+      "claim_class": "OBSERVATION",
+      "source_title": "Amazon 2026 US FBA fulfillment fee schedule",
+      "source_url": "https://sellercentral.amazon.com/help/hub/reference/external/GABBX6GZPA8MSZGW?itemid=211&locale=en-us",
+      "source_type": "platform_fee_schedule",
+      "locator": "Small-standard nonpeak and peak fee tables",
+      "retrieval_date": "2026-10-03",
+      "observed_at": "2026-10-03",
+      "collection_method": "manual_web_review",
+      "acceptance_state": "accepted",
+      "notes": "The applicable size tier depends on packaged dimensions as well as weight. Storage, inbound placement, returns, advertising, discounts, and the separately stated fuel/logistics surcharge are additional.",
+      "payload": {
+        "small_standard_nonpeak_fba_fee_usd_up_to_2oz": 3.32,
+        "small_standard_peak_fba_fee_usd_up_to_2oz": 3.51,
+        "separately_stated_fuel_logistics_surcharge_percent": 3.5
+      }
+    }
+  ],
+  "signals": [
+    {
+      "signal_id": "mk-sig-001-amazon-query-results",
+      "metric": "amazon_query_result_count",
+      "value_decimal": 100,
+      "value_text": "1-48 of 100 results",
+      "unit": "mixed_results",
+      "evidence_ids": ["mk-ev-003-amazon-snapshot"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "amazon-us-web-2026-10-03",
+      "request": {"query": "makhana", "locale": "Miami 33166", "signed_in": false}
+    },
+    {
+      "signal_id": "mk-sig-002-rte-price-median",
+      "metric": "observed_rte_price_per_oz_median",
+      "value_decimal": 4.06,
+      "value_text": "median of nine included first-page ready-to-eat offers",
+      "unit": "USD_per_oz",
+      "evidence_ids": ["mk-ev-003-amazon-snapshot"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "manual-comparable-rule-v1",
+      "request": {"sample_size": 9, "statistic": "median", "scope": "nonrandom Amazon first-page snapshot"}
+    },
+    {
+      "signal_id": "mk-sig-003-rte-price-range",
+      "metric": "observed_rte_price_per_oz_range",
+      "value_decimal": null,
+      "value_text": "$2.60-$5.69 per oz",
+      "unit": "USD_per_oz",
+      "evidence_ids": ["mk-ev-003-amazon-snapshot"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "manual-comparable-rule-v1",
+      "request": {"sample_size": 9, "statistic": "min_max"}
+    },
+    {
+      "signal_id": "mk-sig-004-review-median",
+      "metric": "observed_rte_review_count_median",
+      "value_decimal": 54,
+      "value_text": "median 54; range 0-141",
+      "unit": "Amazon_reviews",
+      "evidence_ids": ["mk-ev-003-amazon-snapshot"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "manual-comparable-rule-v1",
+      "request": {"sample_size": 9, "statistic": "median_and_range"}
+    },
+    {
+      "signal_id": "mk-sig-005-whole-foods-price",
+      "metric": "whole_foods_observed_price_per_oz",
+      "value_decimal": 4.94,
+      "value_text": "$4.94 for 1 oz",
+      "unit": "USD_per_oz",
+      "evidence_ids": ["mk-ev-004-whole-foods-asha"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "whole-foods-web-2026-10-03",
+      "request": {"brand": "AshaPops", "size_oz": 1}
+    },
+    {
+      "signal_id": "mk-sig-006-walmart-query-results",
+      "metric": "walmart_query_result_count",
+      "value_decimal": 30,
+      "value_text": "30 mixed results",
+      "unit": "mixed_results",
+      "evidence_ids": ["mk-ev-005-walmart-category"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "walmart-us-web-2026-10-03",
+      "request": {"query": "phool makhana"}
+    },
+    {
+      "signal_id": "mk-sig-007-origin-concentration",
+      "metric": "reported_bihar_share_of_indian_output",
+      "value_decimal": 85,
+      "value_text": "reported range 85-90%",
+      "unit": "percent_lower_bound",
+      "evidence_ids": ["mk-ev-001-apeda-market-study"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "accepted",
+      "provider_version": "apeda-market-study",
+      "request": {"statistic": "reported_range_lower_bound"}
+    },
+    {
+      "signal_id": "mk-sig-008-supplier-moq-low",
+      "metric": "claimed_supplier_moq_low",
+      "value_decimal": 25,
+      "value_text": "25 kg claimed for roasted/flavored product",
+      "unit": "kg",
+      "evidence_ids": ["mk-ev-007-bihari-bites", "mk-ev-008-purnia-supplier"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "unverified",
+      "provider_version": "supplier-sites-2026-10-03",
+      "request": {"product_form": "roasted_or_flavored"}
+    },
+    {
+      "signal_id": "mk-sig-009-export-share-conflict",
+      "metric": "reported_export_share_conflict",
+      "value_decimal": null,
+      "value_text": "APEDA sources report 1-2% versus 40%",
+      "unit": "conflicting_percent_claims",
+      "evidence_ids": ["mk-ev-001-apeda-market-study", "mk-ev-002-apeda-dashboard"],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "unverified",
+      "provider_version": "cross-source-conflict-v1",
+      "request": {"resolution": "retain_both_do_not_merge"}
+    },
+    {
+      "signal_id": "mk-sig-010-fragility-proxy",
+      "metric": "roasting_breaking_force_reduction",
+      "value_decimal": 64.2,
+      "value_text": "breaking force fell from 6.12 kgf to 2.19 kgf",
+      "unit": "percent_reduction",
+      "evidence_ids": ["mk-ev-009-food-fragility-study"],
+      "observed_at": "2021-01-01",
+      "acceptance_state": "accepted",
+      "provider_version": "published-study-calculation-v1",
+      "request": {"formula": "(6.12-2.19)/6.12*100"}
+    },
+    {
+      "signal_id": "mk-sig-011-amazon-single-pack-stress",
+      "metric": "amazon_single_pack_contribution_before_ads_storage_returns",
+      "value_decimal": null,
+      "value_text": "+$0.71 to -$0.39 at $5.69 retail and assumed $1.20-$2.30 landed cost",
+      "unit": "USD_per_unit",
+      "evidence_ids": [
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-010-amazon-fees",
+        "mk-ev-016-amazon-fba-fees"
+      ],
+      "observed_at": "2026-10-03",
+      "acceptance_state": "unverified",
+      "provider_version": "amazon-single-unit-stress-v1",
+      "request": {
+        "formula": "retail - 8% referral - $3.32 FBA - assumed landed cost",
+        "excluded_costs": ["surcharge", "storage", "inbound placement", "returns", "ads", "discounts"]
+      }
+    }
+  ],
+  "normalized_features": {
+    "demand": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "No reproducible U.S. sales, panel, conversion, or approved demand-proxy series; marketplace presence and mentions do not establish demand."
+    },
+    "competition_gap": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "Marketplace result pages mix raw and ready-to-eat products, duplicates, and sponsored cards; no approved deduplicated brand-share or concentration transform exists."
+    },
+    "margin": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "Sensitivity scenarios are not quotes; landed cost lacks a supplier quote, freight quote, product-specific tariff ruling, customs overhead, fulfillment contract, and measured breakage."
+    },
+    "search_velocity": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "No reproducible U.S. time series with provider version, date window, and request identity was captured."
+    },
+    "social_velocity": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "Observed recipes, videos, and anecdotes lack a reproducible U.S. time series and cannot be converted from mention counts into demand."
+    },
+    "supplier_depth": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "Multiple suppliers claim capability, but no independent entity verification, quote, certificate, audit, COA, sample, or on-time performance evidence exists."
+    },
+    "shelf_stability": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "No finished, seasoned product shelf-life study or supplier specification tied to the proposed package was obtained."
+    },
+    "shipping": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "Physical research supports fragility and low density, but commercial package dimensions, zone rates, damage tests, and breakage allowances are absent."
+    },
+    "brandability": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "No approved brandability transform or trademark/domain clearance; all three exploratory names have descriptive, prior-use, terminology, or semantic risks."
+    },
+    "repeat_purchase": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "No cohort, reorder, household panel, or measured consumption-cadence evidence exists."
+    },
+    "regulatory_risk": {
+      "value": null,
+      "formula_version": null,
+      "evidence_ids": [],
+      "missing_reason": "General duties are identifiable, but exact formula, claims, facility status, FSVP importer, HTS classification, tariff stack, and APHIS treatment are unresolved."
+    }
+  },
+  "economics": {
+    "basis": "Four 1 oz packs sold as one DTC order. Retail anchors are observed; every cost input is a deliberately broad sensitivity assumption, not a quote. Scenarios exclude CAC, storage, returns, spoilage, breakage, discounts, tax, overhead, and chargebacks.",
+    "scenarios": [
+      {
+        "name": "LOW (downside contribution)",
+        "units_per_order": 4,
+        "retail_price_usd": 19.76,
+        "factory_cost_per_unit_usd": 0.95,
+        "packaging_per_unit_usd": 0.45,
+        "freight_per_unit_usd": 0.45,
+        "duty_per_unit_usd": 0.3,
+        "import_overhead_per_unit_usd": 0.2,
+        "fulfillment_per_order_usd": 9.5,
+        "payment_rate": 0.029,
+        "payment_fixed_usd": 0.3,
+        "evidence_ids": [
+          "mk-ev-002-apeda-dashboard",
+          "mk-ev-004-whole-foods-asha",
+          "mk-ev-007-bihari-bites"
+        ],
+        "assumption_notes": [
+          "Retail equals four times the observed Whole Foods one-ounce price.",
+          "Costs deliberately stress freight, duty, import overhead, and fulfillment.",
+          "No product-specific customs classification or fulfillment quote exists."
+        ]
+      },
+      {
+        "name": "BASE (working hypothesis)",
+        "units_per_order": 4,
+        "retail_price_usd": 21.99,
+        "factory_cost_per_unit_usd": 0.7,
+        "packaging_per_unit_usd": 0.35,
+        "freight_per_unit_usd": 0.3,
+        "duty_per_unit_usd": 0.2,
+        "import_overhead_per_unit_usd": 0.15,
+        "fulfillment_per_order_usd": 8,
+        "payment_rate": 0.029,
+        "payment_fixed_usd": 0.3,
+        "evidence_ids": [
+          "mk-ev-002-apeda-dashboard",
+          "mk-ev-003-amazon-snapshot",
+          "mk-ev-007-bihari-bites"
+        ],
+        "assumption_notes": [
+          "Revenue is a hypothetical four-pack price within observed premium-snack anchors.",
+          "Factory, packaging, freight, duty, import, and fulfillment costs are unquoted assumptions.",
+          "DTC payment processing is assumed at 2.9% plus $0.30."
+        ]
+      },
+      {
+        "name": "HIGH (upside contribution)",
+        "units_per_order": 4,
+        "retail_price_usd": 23.96,
+        "factory_cost_per_unit_usd": 0.55,
+        "packaging_per_unit_usd": 0.25,
+        "freight_per_unit_usd": 0.2,
+        "duty_per_unit_usd": 0.1,
+        "import_overhead_per_unit_usd": 0.1,
+        "fulfillment_per_order_usd": 6.5,
+        "payment_rate": 0.029,
+        "payment_fixed_usd": 0.3,
+        "evidence_ids": [
+          "mk-ev-002-apeda-dashboard",
+          "mk-ev-003-amazon-snapshot",
+          "mk-ev-007-bihari-bites"
+        ],
+        "assumption_notes": [
+          "Revenue equals four $5.99 packs, near observed premium marketplace offers.",
+          "All cost inputs require favorable scale and execution and are unquoted assumptions.",
+          "The scenario is an upside boundary, not a forecast."
+        ]
+      }
+    ]
+  },
+  "card": {
+    "executive_summary": "Makhana is a real but early U.S. snack niche with visible Amazon, Walmart, and Whole Foods presence, a credible Bihar sourcing story, and premium per-ounce pricing. The evidence does not yet prove U.S. velocity, repeat purchase, scalable contribution margin, supplier quality, or import readiness. This card therefore authorizes only a tightly bounded learning test—not a launch or inventory buy.",
+    "market": "Direct snapshots show 100 Amazon results for 'makhana' and 30 Walmart results for 'phool makhana,' but both mix raw ingredients, ready-to-eat snacks, duplicates, and marketplace offers. A first-page Amazon ready-to-eat sample had a $4.06/oz median ($2.60-$5.69) and 54-review median (0-141); the nonrandom, brand-concentrated sample is descriptive only. Whole Foods confirms one AshaPops 1 oz listing at $4.94/oz. Category maturity appears niche-established rather than empty or mass-market.",
+    "demand": "Existing brands, retailer listings, recipes, and long-running Indian familiarity show that the product is intelligible and sellable, not that U.S. demand is large. No reproducible U.S. search trend, sales panel, conversion series, or repeat-rate evidence was captured. Large India-oriented video counts and raw social mentions were explicitly excluded as demand proxies.",
+    "competition": "Credible brands include AshaPops, Farmley, eatThis, Rani, Karma, Peppy Pops, Nourish, and FIT FOX. Salted/plain, masala/peri-peri, chili, cheese, turmeric, barbecue, mint, and variety packs recur, usually in lightweight pouches. Whitespace may exist in transparent Bihar provenance, measured breakage/quality, and a disciplined discovery bundle, but low apparent brand concentration could equally reflect low category demand.",
+    "supply": "APEDA describes India and Bihar as highly concentrated production sources and a fragmented, labor-intensive processing chain with quality and packaging inconsistency. Multiple Bihar suppliers advertise roasted/flavored private label, 25-50 kg MOQs, nitrogen flush, and export documentation; these are unverified seller claims. No supplier quote, sample, audit, certification, COA, labor due diligence, or freight lane was obtained.",
+    "regulatory_friction": "Importing a seasoned packaged food entails FDA facility and prior-notice considerations, an identified FSVP importer with a written supplier-verification program, formula-specific labeling, and substantiated claims. Makhana itself is not a U.S. major allergen, but seasoning and shared equipment may introduce one. Exact HTS classification, tariff stack, country-of-origin presentation, APHIS treatment, and responsible importer remain unresolved; this is not legal advice.",
+    "product": "The product is shelf-stable in concept, flavor-extensible, portionable, and compatible with discovery bundles. Roasting data support a low-density, more fragile product, creating cube and breakage risk; no finished-product shipping test or shelf-life study exists. Education burden is meaningful because consumers see makhana, foxnut, water-lily seed, and inaccurate lotus-seed language. Repeat purchase is plausible for a savory snack but unmeasured.",
+    "brandability": "The category offers Bihar origin, laboratory/batch, crunch, and discovery territories, but no name is cleared. 'FoxNut Labs' is memorable but partly descriptive; 'Popped Lotus' is botanically inaccurate and has prior descriptor use; 'Lotus Eaters' has obvious commercial use and adverse semantic baggage. Preserve naming flexibility and do not select a permanent mark.",
+    "content_potential": "Strong claim-light hooks include trying every U.S. foxnut brand, blind flavor tests, popcorn comparisons, measured breakage tests, harvesting/processing explainers, Bihar sourcing, supplier comparisons, and recipe experiments. Nutrition, satiety, blood-sugar, weight-loss, anti-inflammatory, or disease-risk claims require much stronger substantiation and label/regulatory review.",
+    "top_unknowns": [
+      "Does a defined U.S. audience convert and reorder at a sustainable rate rather than merely sample once?",
+      "What is the formula- and package-specific landed cost after a written supplier quote, freight, broker, duty, and tariff classification?",
+      "Can a supplier pass identity, food-safety, quality, labor, documentation, and consistency due diligence?",
+      "What shelf life and parcel breakage rate does the finished seasoned product achieve in the proposed pouch and shipper?",
+      "Can a non-misleading name and positioning clear preliminary trademark/domain screening without leaning on unsupported health claims?"
+    ],
+    "top_risks": [
+      "A small visible category is mistaken for whitespace when it actually signals weak U.S. demand.",
+      "Low density, fragility, fulfillment, and acquisition costs erase premium shelf-price margin.",
+      "Fragmented supply creates quality, food-safety, documentation, labor, and consistency failures.",
+      "Botanically inaccurate terminology and crowded/descriptive naming create education and trademark risk.",
+      "Import, labeling, allergen, tariff, or health-claim errors delay or block commercialization."
+    ],
+    "cheapest_next_experiment": "With explicit purchase approval, spend no more than $150 on 6-8 existing U.S. ready-to-eat packs across at least four brands. Run a documented blind taste/value test plus a repeatable pouch-and-parcel breakage check; record net weights, broken-piece percentage, flavor preference, willingness-to-pay, and unaided terminology comprehension. Do not contact suppliers or publish claims yet. Advance only if the test yields a specific product hypothesis and justifies written quotes and a compliant landing-page interest test.",
+    "max_recommended_spend_usd": 150,
+    "verified_hard_blockers": []
+  },
+  "agent_runs": [
+    {
+      "run_id": "product-001-scout-20261003-01",
+      "agent": "Scout",
+      "model": null,
+      "route": "collaboration:local-plus-browser",
+      "started_at": null,
+      "ended_at": null,
+      "duration_ms": null,
+      "cost_amount": null,
+      "cost_currency": null,
+      "cost_state": "UNKNOWN",
+      "output_artifact": "evidence/makhana/makhana.evidence.v1.json",
+      "status": "succeeded"
+    },
+    {
+      "run_id": "product-001-market-analyst-20261003-01",
+      "agent": "Market Analyst",
+      "model": null,
+      "route": "collaboration:local",
+      "started_at": null,
+      "ended_at": null,
+      "duration_ms": null,
+      "cost_amount": null,
+      "cost_currency": null,
+      "cost_state": "UNKNOWN",
+      "output_artifact": "evidence/makhana/makhana.evidence.v1.json",
+      "status": "succeeded"
+    },
+    {
+      "run_id": "product-001-synthesizer-20261003-01",
+      "agent": "Synthesizer",
+      "model": null,
+      "route": "collaboration:root-plus-deterministic-python",
+      "started_at": null,
+      "ended_at": null,
+      "duration_ms": null,
+      "cost_amount": null,
+      "cost_currency": null,
+      "cost_state": "UNKNOWN",
+      "output_artifact": "docs/opportunity-cards/makhana-v1.md",
+      "status": "succeeded"
+    }
+  ]
+}

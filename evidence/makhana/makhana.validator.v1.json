@@ -1,0 +1,170 @@
+{
+  "version": "makhana-validator-v1.0.0",
+  "product_family_id": "product-001",
+  "verdict": "REJECT",
+  "findings": [
+    {
+      "finding_id": "mk-val-001-zero-decision-grade-coverage",
+      "severity": "critical",
+      "status": "open",
+      "title": "No scoring dimension has decision-grade coverage",
+      "strongest_case": "All 11 normalized features are null. The packet therefore has no quantified score or evidence coverage capable of supporting BUILD. The sources establish category presence and known obligations, but not launch readiness.",
+      "affected_features": [
+        "demand",
+        "competition_gap",
+        "margin",
+        "search_velocity",
+        "social_velocity",
+        "supplier_depth",
+        "shelf_stability",
+        "shipping",
+        "brandability",
+        "repeat_purchase",
+        "regulatory_risk"
+      ],
+      "evidence_ids": [
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-004-whole-foods-asha",
+        "mk-ev-005-walmart-category",
+        "mk-ev-007-bihari-bites",
+        "mk-ev-008-purnia-supplier",
+        "mk-ev-011-fda-importing-food",
+        "mk-ev-012-fsvp",
+        "mk-ev-013-fda-labeling"
+      ],
+      "recommended_action": "Keep BUILD unavailable until approved transforms have decision-grade inputs, beginning with U.S. demand, quoted landed economics, verified supplier readiness, finished-product shelf/shipping performance, and a formula-specific compliance path."
+    },
+    {
+      "finding_id": "mk-val-002-demand-and-repeat-unproven",
+      "severity": "high",
+      "status": "open",
+      "title": "Retail presence is being mistaken for demand evidence",
+      "strongest_case": "Amazon and Walmart counts mix raw products, ready-to-eat products, sponsored duplicates, and marketplace offers. One Whole Foods listing and modest review counts prove availability, not velocity, conversion, audience size, or repeat purchase. A small visible niche may represent weak demand rather than whitespace.",
+      "affected_features": [
+        "demand",
+        "search_velocity",
+        "social_velocity",
+        "repeat_purchase",
+        "competition_gap"
+      ],
+      "evidence_ids": [
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-004-whole-foods-asha",
+        "mk-ev-005-walmart-category"
+      ],
+      "recommended_action": "Obtain a reproducible U.S. search or sales series and run a clearly defined, unpaid intent test before treating marketplace presence as demand."
+    },
+    {
+      "finding_id": "mk-val-003-margin-scenario-unsubstantiated",
+      "severity": "high",
+      "status": "open",
+      "title": "Positive contribution exists only inside unquoted assumptions",
+      "strongest_case": "The downside DTC case is already slightly negative before CAC. The base case permits only $6.25 of break-even CAC, while every factory, packaging, freight, duty, import-overhead, fulfillment, and payment input is unquoted. Fragility and low density can worsen freight and damage economics; a single-pack Amazon fee stress test is approximately +$0.71 to -$0.39 before ads, storage, returns, and surcharges.",
+      "affected_features": [
+        "margin",
+        "shipping",
+        "supplier_depth"
+      ],
+      "evidence_ids": [
+        "mk-ev-002-apeda-dashboard",
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-004-whole-foods-asha",
+        "mk-ev-007-bihari-bites",
+        "mk-ev-009-food-fragility-study",
+        "mk-ev-010-amazon-fees",
+        "mk-ev-016-amazon-fba-fees"
+      ],
+      "recommended_action": "Obtain written EXW/FOB quotes, pack specifications, freight and broker quotes, channel-specific fulfillment fees, and measured damage allowance; then rerun economics separately for DTC and marketplace channels."
+    },
+    {
+      "finding_id": "mk-val-004-supply-quality-and-labor-risk",
+      "severity": "high",
+      "status": "open",
+      "title": "Supplier availability is claimed, not validated",
+      "strongest_case": "APEDA describes a concentrated, fragmented, labor-intensive chain with inconsistent quality, consignment rejection risk, and a child-labor concern. The cited suppliers only self-report MOQ, capacity, lead time, and private-label capability. No legal-entity verification, quote, audit, food-safety certificate, COA, sample, labor diligence, or performance history exists.",
+      "affected_features": [
+        "supplier_depth",
+        "shelf_stability",
+        "regulatory_risk",
+        "margin"
+      ],
+      "evidence_ids": [
+        "mk-ev-001-apeda-market-study",
+        "mk-ev-007-bihari-bites",
+        "mk-ev-008-purnia-supplier",
+        "mk-ev-012-fsvp"
+      ],
+      "recommended_action": "Require a written supplier-information package covering ownership, facility registration, food-safety systems, COAs, traceability, labor controls, finished-product specifications, references, and commercial terms before supplier scoring."
+    },
+    {
+      "finding_id": "mk-val-005-import-and-label-path-unresolved",
+      "severity": "high",
+      "status": "open",
+      "title": "Known regulatory duties have no product-specific implementation path",
+      "strongest_case": "FDA guidance establishes facility, prior-notice, FSVP, labeling, allergen, and claims obligations, but the packet has no final formula, label, responsible FSVP importer, supplier hazard analysis, facility status, HTS classification, tariff treatment, or APHIS conclusion. This uncertainty blocks importing and selling; it does not prove compliant import is impossible.",
+      "affected_features": [
+        "regulatory_risk",
+        "supplier_depth",
+        "margin"
+      ],
+      "evidence_ids": [
+        "mk-ev-011-fda-importing-food",
+        "mk-ev-012-fsvp",
+        "mk-ev-013-fda-labeling"
+      ],
+      "recommended_action": "Define the formula, claims, pack, importer, and supplier, then obtain qualified customs and food-regulatory review plus supplier-verification documentation before any commercial shipment."
+    },
+    {
+      "finding_id": "mk-val-006-fragility-and-shelf-life-unmeasured",
+      "severity": "high",
+      "status": "open",
+      "title": "Physical suitability for U.S. parcel fulfillment is unknown",
+      "strongest_case": "Peer-reviewed data show roasting lowers breaking force by about 64% and produces a low-density product. APEDA separately flags packaging and quality inconsistency. No proposed pouch, shipper, transit test, commercial breakage rate, seasoning stability, or finished-product shelf-life result exists.",
+      "affected_features": [
+        "shipping",
+        "shelf_stability",
+        "margin",
+        "repeat_purchase"
+      ],
+      "evidence_ids": [
+        "mk-ev-001-apeda-market-study",
+        "mk-ev-009-food-fragility-study"
+      ],
+      "recommended_action": "Test multiple existing and prototype packs for broken-piece percentage before and after parcel transit, then obtain formula- and package-specific shelf-life evidence."
+    },
+    {
+      "finding_id": "mk-val-007-positioning-and-name-not-cleared",
+      "severity": "medium",
+      "status": "open",
+      "title": "Terminology and naming add education and clearance risk",
+      "strongest_case": "The category uses makhana, foxnut, water-lily seed, and botanically inaccurate lotus terminology. Existing snack brands already occupy the niche, while none of the three proposed names has received a proper clearance search. Lotus Eaters has obvious existing commercial use and adverse semantic baggage.",
+      "affected_features": [
+        "brandability",
+        "competition_gap",
+        "demand"
+      ],
+      "evidence_ids": [
+        "mk-ev-001-apeda-market-study",
+        "mk-ev-003-amazon-snapshot",
+        "mk-ev-005-walmart-category",
+        "mk-ev-014-lotus-eaters-use",
+        "mk-ev-015-name-screen"
+      ],
+      "recommended_action": "Keep all names provisional; test category terminology comprehension first and conduct professional trademark, common-law, domain, and class screening only after a product hypothesis survives."
+    }
+  ],
+  "agent_run": {
+    "run_id": "product-001-validator-20261003-01",
+    "agent": "Validator",
+    "model": null,
+    "route": "collaboration:independent-adversarial",
+    "started_at": null,
+    "ended_at": null,
+    "duration_ms": null,
+    "cost_amount": null,
+    "cost_currency": null,
+    "cost_state": "UNKNOWN",
+    "output_artifact": "evidence/makhana/makhana.validator.v1.json",
+    "status": "succeeded"
+  }
+}

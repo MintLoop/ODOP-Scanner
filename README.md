@@ -17,13 +17,17 @@ official PDF, text, CSV, or JSON
   -> deterministic normalization and reviewed alias taxonomy
   -> product families with district-level provenance
   -> candidate dataset
+  -> strict, provenance-bearing market evidence packet
   -> pure configured scoring function
+  -> independent validator findings
+  -> deterministic BUILD / TEST / WATCH / KILL gate
+  -> Markdown opportunity card
   -> evidence coverage and confidence band
   -> JSON CLI/report output and processing-run receipts
 ```
 
-Internet market enrichment, scraping, supplier outreach, and autonomous decisions are deliberately
-out of scope.
+Market evidence is imported through a reviewed manual packet in this slice. Autonomous scraping,
+supplier outreach, purchases, publication, and launch actions remain out of scope.
 
 ## Setup
 
@@ -115,6 +119,29 @@ Normalize, inspect candidates, score Makhana, and produce a report:
 .venv/bin/python -m odop_scanner report --top 10
 ```
 
+### Opportunity-card evidence import
+
+The Product #001 dogfood packet is stored rather than embedded in prose, so it can be revalidated and
+rescored when facts change. Reproduce the card after ingesting and normalizing the ODOP source:
+
+```bash
+.venv/bin/python -m odop_scanner opportunity-card makhana \
+  --evidence evidence/makhana/makhana.evidence.v1.json \
+  --validator evidence/makhana/makhana.validator.v1.json \
+  --output docs/opportunity-cards/makhana-v1.md
+```
+
+The importer fails closed on unknown packet fields, invalid evidence references, numeric features
+without a formula and evidence cut, malformed validator findings, or incomplete five-item risk and
+unknown lists. Evidence observations, supplier claims, derived signals, score inputs, economics
+assumptions, validator findings, decisions, and agent-run receipts are stored separately in DuckDB.
+
+[`config/decision_gates.v0.toml`](config/decision_gates.v0.toml) defines provisional research-only
+promotion rules. A verified hard blocker produces `KILL`; `BUILD` requires the configured score,
+coverage, confidence, and a Validator `PASS`; a bounded experiment under the configured ceiling can
+produce `TEST`; otherwise the result is `WATCH`. The rule engine—not the narrative agent—selects the
+gate.
+
 By default, the DuckDB database is `data/odop.duckdb` and immutable source snapshots are placed under
 `data/raw/`. Both are intentionally ignored by Git. Re-running ingestion is idempotent for identical
 source bytes because source and row IDs are content-derived.
@@ -180,3 +207,23 @@ Tests cover ingestion, malformed rows, aliases, ambiguous normalization, duplica
 deterministic scoring, missing evidence, weighted coverage, config versioning, regulatory penalties,
 run receipts, source reconciliation statuses, append-only reviews, source-version isolation, and the
 Makhana Product #001 slice.
+
+## Product #002 reusable capabilities
+
+The Makhana run establishes reusable contracts for evidence items, derived market signals, missing
+feature reasons, low/base/high economics sensitivities, independent adversarial findings, deterministic
+promotion gates, agent telemetry, and card rendering. Product #002 should reuse those contracts and add
+provider-specific adapters only when they can preserve request identity, collection time, scope,
+deduplication rules, and source attribution. The next high-value general capabilities are:
+
+1. a deduplicated marketplace-comparable adapter that separates raw ingredients from ready-to-eat
+   products and retains price, weight, reviews, badges, seller, and variant identity;
+2. versioned U.S. search/social time-series adapters rather than point estimates or mention counts;
+3. a supplier diligence and quote schema for MOQ, Incoterm, lead time, certificates, COAs, capacity,
+   samples, and verification state;
+4. a landed-cost calculator with broker-supported HTS/tariff inputs, freight, packaging, breakage,
+   storage, returns, channel fees, and explicit confidence;
+5. product-form shelf-life, parcel-damage, claims, labeling, allergen, and FSVP checklists with human
+   approval boundaries; and
+6. feature-transform calibration datasets, so future normalized values come from reviewed formulas
+   rather than model judgment.

@@ -1,17 +1,29 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+# Python 3.9 compatibility: UTC is not available until 3.11
+try:
+    from datetime import UTC
+except ImportError:
+    from datetime import timezone
+    UTC = timezone.utc
 
 import duckdb
 
 from .config import project_root
 from .models import (
+    DecisionGateConfig,
+    DecisionResult,
+    EvidenceItem,
+    MarketSignal,
     MetricValue,
     NormalizationDecision,
     ParsedRow,
@@ -21,6 +33,8 @@ from .models import (
     SourceDocument,
     SourceFreshnessConfig,
     TaxonomyConfig,
+    ValidatorFinding,
+    ValidatorVerdict,
 )
 from .normalization import normalize_text
 
@@ -754,6 +768,179 @@ def store_score(connection: duckdb.DuckDBPyConnection, score: ScoreResult) -> No
             score.scored_at,
         ],
     )
+
+
+def store_market_evidence(
+    connection: duckdb.DuckDBPyConnection,
+    evidence: Iterable[EvidenceItem],
+    signals: Iterable[MarketSignal],
+) -> tuple[int, int]:
+    evidence_items = list(evidence)
+    market_signals = list(signals)
+    now = datetime.now(UTC)
+    if evidence_items:
+        connection.executemany(
+            """
+            INSERT INTO evidence_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (evidence_id) DO NOTHING
+            """,
+            [
+                [
+                    item.evidence_id,
+                    item.family_id,
+                    item.claim_class,
+                    item.source_title,
+                    item.source_url,
+                    item.source_type,
+                    item.locator,
+                    item.retrieval_date,
+                    item.observed_at,
+                    item.collection_method,
+                    item.acceptance_state,
+                    item.content_sha256,
+                    item.notes,
+                    json.dumps(item.payload, sort_keys=True),
+                    now,
+                ]
+                for item in evidence_items
+            ],
+        )
+    if market_signals:
+        connection.executemany(
+            """
+            INSERT INTO market_signals VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (signal_id) DO NOTHING
+            """,
+            [
+                [
+                    signal.signal_id,
+                    signal.family_id,
+                    signal.metric,
+                    signal.value_decimal,
+                    signal.value_text,
+                    signal.unit,
+                    json.dumps(signal.evidence_ids),
+                    signal.observed_at,
+                    signal.acceptance_state,
+                    signal.provider_version,
+                    signal.request_hash,
+                    now,
+                ]
+                for signal in market_signals
+            ],
+        )
+    return len(evidence_items), len(market_signals)
+
+
+def store_validator_findings(
+    connection: duckdb.DuckDBPyConnection,
+    score_id: str,
+    findings: Iterable[ValidatorFinding],
+) -> int:
+    materialized = list(findings)
+    now = datetime.now(UTC)
+    if materialized:
+        connection.executemany(
+            """
+            INSERT INTO validator_findings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (finding_id) DO NOTHING
+            """,
+            [
+                [
+                    finding.finding_id,
+                    finding.family_id,
+                    score_id,
+                    finding.severity,
+                    finding.status,
+                    finding.title,
+                    finding.strongest_case,
+                    json.dumps(finding.affected_features),
+                    json.dumps(finding.evidence_ids),
+                    finding.recommended_action,
+                    now,
+                ]
+                for finding in materialized
+            ],
+        )
+    return len(materialized)
+
+
+def store_decision(
+    connection: duckdb.DuckDBPyConnection,
+    *,
+    family_id: str,
+    score_id: str,
+    decision: DecisionResult,
+    validator_verdict: ValidatorVerdict,
+    evidence_packet_sha256: str,
+    gate_config: DecisionGateConfig,
+) -> str:
+    canonical = json.dumps(
+        {
+            "family_id": family_id,
+            "score_id": score_id,
+            "gate": decision.gate,
+            "validator_verdict": validator_verdict,
+            "evidence_packet_sha256": evidence_packet_sha256,
+            "gate_config_sha256": gate_config.sha256,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    decision_id = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    connection.execute(
+        """
+        INSERT INTO decision_records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (decision_id) DO NOTHING
+        """,
+        [
+            decision_id,
+            family_id,
+            score_id,
+            decision.gate,
+            decision.research_only,
+            validator_verdict,
+            json.dumps(decision.reasons),
+            decision.max_recommended_spend_usd,
+            evidence_packet_sha256,
+            gate_config.sha256,
+            datetime.now(UTC),
+        ],
+    )
+    return decision_id
+
+
+def store_agent_runs(
+    connection: duckdb.DuckDBPyConnection,
+    family_id: str,
+    runs: Iterable[Mapping[str, Any]],
+) -> int:
+    materialized = list(runs)
+    now = datetime.now(UTC)
+    for item in materialized:
+        connection.execute(
+            """
+            INSERT INTO agent_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (run_id) DO NOTHING
+            """,
+            [
+                str(item["run_id"]),
+                family_id,
+                str(item["agent"]),
+                item.get("model"),
+                item.get("route"),
+                item.get("started_at"),
+                item.get("ended_at"),
+                item.get("duration_ms"),
+                item.get("cost_amount"),
+                item.get("cost_currency"),
+                str(item["cost_state"]),
+                item.get("output_artifact"),
+                str(item["status"]),
+                now,
+            ],
+        )
+    return len(materialized)
 
 
 def product_record(connection: duckdb.DuckDBPyConnection, family_id: str) -> dict[str, Any]:

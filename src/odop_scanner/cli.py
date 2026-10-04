@@ -7,11 +7,12 @@ import sys
 import tempfile
 from collections.abc import Sequence
 from dataclasses import asdict
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, cast
 
 from .config import (
+    load_decision_gates,
     load_reconciliation,
     load_scoring,
     load_source_freshness,
@@ -20,8 +21,25 @@ from .config import (
     project_root,
 )
 from .ingestion import download_source, ingest_path
-from .models import ReconciliationDataset, ReconciliationResult, ReviewDecision
+from .models import (
+    ReconciliationDataset,
+    ReconciliationResult,
+    ReviewDecision,
+    ValidatorVerdict,
+)
 from .normalization import normalize_rows
+from .opportunity import (
+    decide_gate,
+    economics_as_dict,
+    load_evidence_packet,
+    load_validator_packet,
+    packet_economics,
+    packet_evidence,
+    packet_features,
+    packet_signals,
+    render_opportunity_card,
+    validator_findings,
+)
 from .reconciliation import makhana_checks, reconcile_datasets
 from .scoring import calculate_score
 from .storage import (
@@ -39,11 +57,16 @@ from .storage import (
     resolve_family_id,
     score_as_dict,
     source_set_identifier,
+    store_agent_runs,
+    store_decision,
     store_ingestion,
+    store_market_evidence,
     store_normalization,
     store_reconciliation,
     store_score,
     store_source_freshness,
+    store_validator_findings,
+    upsert_features,
 )
 
 
@@ -121,6 +144,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
     report = subparsers.add_parser("report", help="show the latest ranked score records")
     report.add_argument("--top", type=int, default=10)
+
+    card = subparsers.add_parser(
+        "opportunity-card",
+        help="import reviewed evidence, score it, apply validator findings, and render a card",
+    )
+    card.add_argument("product")
+    card.add_argument("--evidence", type=Path, required=True)
+    card.add_argument("--validator", type=Path, required=True)
+    card.add_argument("--output", type=Path, required=True)
+    card.add_argument("--score-config", type=Path)
+    card.add_argument("--gate-config", type=Path)
 
     return parser
 
@@ -589,6 +623,116 @@ def _report(args: argparse.Namespace) -> dict[str, Any]:
         connection.close()
 
 
+def _opportunity_card(args: argparse.Namespace) -> dict[str, Any]:
+    scoring_config = load_scoring(args.score_config)
+    gate_config = load_decision_gates(args.gate_config)
+    evidence_packet = load_evidence_packet(args.evidence)
+    evidence_items = packet_evidence(evidence_packet)
+    market_signals = packet_signals(evidence_packet)
+    known_evidence_ids = {item.evidence_id for item in evidence_items}
+    validator_packet = load_validator_packet(args.validator, known_evidence_ids)
+    packet_hash = hashlib.sha256(args.evidence.read_bytes()).hexdigest()
+    input_hash = hashlib.sha256(
+        args.evidence.read_bytes()
+        + args.validator.read_bytes()
+        + scoring_config.sha256.encode()
+        + gate_config.sha256.encode()
+    ).hexdigest()
+    connection = connect_database(args.db)
+    run = ProcessingRun(
+        connection,
+        "opportunity-card",
+        config_version=(
+            f"evidence:{evidence_packet['version']};score:{scoring_config.version};"
+            f"gate:{gate_config.version};validator:{validator_packet['version']}"
+        ),
+        config_sha256=gate_config.sha256,
+        model_route="role-chain:recorded-in-agent-runs",
+        source_identifier=f"manual-evidence:{packet_hash}",
+        input_hash=input_hash,
+    )
+    try:
+        family_id = resolve_family_id(connection, args.product)
+        if evidence_packet["product_family_id"] != family_id:
+            raise ValueError("evidence packet does not match the requested product family")
+        if validator_packet["product_family_id"] != family_id:
+            raise ValueError("validator packet does not match the requested product family")
+        evidence_count, signal_count = store_market_evidence(
+            connection, evidence_items, market_signals
+        )
+        features = packet_features(evidence_packet)
+        upsert_features(
+            connection,
+            family_id,
+            features,
+            evidence={name: item for name, item in evidence_packet["normalized_features"].items()},
+            observed_at=datetime.combine(
+                date.fromisoformat(str(evidence_packet["retrieval_date"])),
+                datetime.min.time(),
+                tzinfo=UTC,
+            ),
+        )
+        score = calculate_score(family_id, features, scoring_config)
+        store_score(connection, score)
+        findings = validator_findings(validator_packet)
+        finding_count = store_validator_findings(connection, score.score_id, findings)
+        unresolved_critical = tuple(
+            finding.finding_id
+            for finding in findings
+            if finding.status == "open" and finding.severity == "critical"
+        )
+        verdict = cast(ValidatorVerdict, validator_packet["verdict"])
+        decision = decide_gate(
+            score,
+            gate_config,
+            validator_verdict=verdict,
+            verified_hard_blockers=tuple(
+                str(value) for value in evidence_packet["card"].get("verified_hard_blockers", [])
+            ),
+            unresolved_critical_findings=unresolved_critical,
+            proposed_test_spend_usd=float(evidence_packet["card"]["max_recommended_spend_usd"]),
+        )
+        decision_id = store_decision(
+            connection,
+            family_id=family_id,
+            score_id=score.score_id,
+            decision=decision,
+            validator_verdict=verdict,
+            evidence_packet_sha256=packet_hash,
+            gate_config=gate_config,
+        )
+        agent_runs = [*evidence_packet["agent_runs"], validator_packet["agent_run"]]
+        agent_count = store_agent_runs(connection, family_id, agent_runs)
+        economics = packet_economics(evidence_packet)
+        markdown = render_opportunity_card(
+            evidence_packet, score, economics, validator_packet, decision
+        )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(markdown, encoding="utf-8")
+        output = {
+            "run_id": run.run_id,
+            "product_family_id": family_id,
+            "evidence_packet_sha256": packet_hash,
+            "evidence_count": evidence_count,
+            "signal_count": signal_count,
+            "score": score_as_dict(score),
+            "validator_verdict": verdict,
+            "validator_finding_count": finding_count,
+            "decision": asdict(decision),
+            "decision_id": decision_id,
+            "economics": economics_as_dict(economics),
+            "agent_run_count": agent_count,
+            "output": str(args.output.resolve()),
+        }
+        run.succeed(f"decision:{decision_id};card:{args.output.resolve()}")
+        return output
+    except BaseException as error:
+        run.fail(error)
+        raise
+    finally:
+        connection.close()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -602,6 +746,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "candidates": _candidates,
         "score": _score,
         "report": _report,
+        "opportunity-card": _opportunity_card,
     }
     try:
         _print(handlers[args.command](args))
